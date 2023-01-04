@@ -1,0 +1,226 @@
+\documentclass[footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook} % one-sided
+
+\setkomafont{disposition}{\normalfont\bfseries} % use serif font for headings
+\linespread{1.05} % adjust line spread for mathpazo font
+
+\usepackage{nameref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[sc]{mathpazo}
+\usepackage[american]{babel}
+\usepackage[autostyle]{csquotes}
+\usepackage[%
+backend=biber,
+url=false,
+style=numeric,
+maxnames=4,
+minnames=3,
+maxbibnames=99,
+giveninits,
+uniquename=init]{biblatex}
+\bibliography{bachelor_thesis}
+% \addbibresource{bachelor_thesis.bib}
+\usepackage{graphicx}
+\usepackage{scrhack} % necessary for listings package
+\usepackage{listings}
+\usepackage{lstautogobble}
+\usepackage{tikz}
+\usepackage{pgf}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{minibox}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage[final]{microtype}
+\usepackage{caption}
+\usepackage{prettyref}
+\usepackage{titleref}
+\usepackage[hidelinks, pdfpagelabels, pdfstartview = FitH, bookmarksopen = true, bookmarksnumbered = true,
+plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
+\usepackage[toc,nonumberlist,acronym]{glossaries} % TODO: remove if glossary not needed
+\usepackage{acronym}
+
+\usepackage{afterpage} %for using \afterpage{\clearpage} (don't push images to the end of a chapter)
+\usepackage{picins} %provides precise control over the placement of inline graphics
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{dsfont} %math symbols
+\usepackage{tabularx}
+\usepackage{subcaption}
+\usepackage{picture}
+\usepackage{floatflt} %float text around figures and tables
+
+\usepackage{enumitem} %resume counting from previous enumerate block
+\usepackage{amsmath,amssymb}
+\usepackage{listings} %for listing source code
+\usepackage{color}
+\usepackage{algpseudocode} %for listing pseudocode
+\usepackage{algorithm} %wrap algpseudocode and enrich with label etc.
+\usepackage{float} % for [H] after floats
+\usepackage{floatflt}
+\usepackage{xparse}
+\usepackage{verbatim}
+\usetikzlibrary{arrows,automata}
+\usetikzlibrary{positioning}
+\usetikzlibrary{calc}
+
+
+\newcommand{\todo}[1]{\textbf{\color{red} #1}}
+
+\newcommand{\thesistitle}{Inferring String Properties from Code Property Graphs}
+\newcommand{\name}{Severin Schmidmeier}
+\newcommand{\submission}{15.03.2023}
+
+\newrefformat{fig}{Figure~\ref{#1}}	%link to a figure
+\newrefformat{chapter}{Chapter~\ref{#1}}	%link to a chapter
+\newrefformat{sec}{Section~\ref{#1}}	%link to a section
+\newrefformat{tab}{Table~\ref{#1}}	%link to a table
+\newrefformat{lst}{Listing~\ref{#1}}	%link to a listing
+
+\newtheorem{Def}{Definition}[chapter]
+
+\makeindex
+\frenchspacing
+\sloppy
+
+\lstset{language=Java,
+		basicstyle=\ttfamily}
+
+%\pagestyle{headings}
+
+%\textwidth16cm
+%\textheight22cm
+
+%\topmargin0cm
+%\oddsidemargin0cm
+%\evensidemargin0cm
+
+\input{logos/tumlogo}
+
+\begin{document}
+
+\nocite{*} %include uncited references in bibliography
+\hoffset=5mm
+\thispagestyle{empty}
+
+\begin{center}
+	\bigskip \bigskip \bigskip
+	\oTUM{5.0cm} \\
+	\vspace*{0.8cm}
+	{\huge DEPARTMENT OF INFORMATICS} \\
+	\bigskip \bigskip
+	{\Large TECHNISCHE UNIVERSIT\"AT M\"UNCHEN} \\
+	\bigskip \bigskip \bigskip \bigskip \bigskip
+	{\Large Bachelor's Thesis in Informatics} \\
+	\bigskip \bigskip \bigskip \bigskip \bigskip
+	{\LARGE \textbf \thesistitle} \\
+	\bigskip \bigskip \bigskip \bigskip
+	{\Large \name} \\    
+	\bigskip\bigskip
+	\begin{figure}[htbp]
+	\centering \includegraphics[width=3cm]{logos/infologo.jpg}
+	\end{figure}
+	\bigskip 
+\end{center}
+
+\vfill
+
+\newpage
+\hoffset=5mm
+\thispagestyle{empty}
+
+\begin{center}
+	\bigskip \bigskip \bigskip 
+	\oTUM{5.0cm} \\
+	\vspace*{0.8cm}
+	{\huge DEPARTMENT OF INFORMATICS} \\
+	\bigskip \bigskip 
+	{\Large TECHNISCHE UNIVERSIT\"AT M\"UNCHEN} \\
+	\bigskip \bigskip \bigskip \bigskip
+	{\Large Bachelor's Thesis in Informatics} \\
+	\bigskip \bigskip \bigskip \bigskip
+	{\Large \thesistitle} \\   
+	\bigskip \bigskip
+	{\Large Herleitung von Eigenschaften von Strings aus Code Property Graphen} \\
+\vfill
+
+\begin{tabular}{ll}
+{\large Author:} & {\large \name} \\\\
+{\large Supervisor:} & {\large Prof. Dr. Claudia Eckert} \\\\
+{\large Advisor(s):} & {\large Alexander K\"uchler, Florian Wendland} \\\\
+{\large Submission:} & {\large \submission}
+\end{tabular}\bigskip
+
+\begin{figure}[htbp]
+\centering \includegraphics[width=3cm]{logos/infologo.jpg}
+\end{figure}
+\bigskip
+\end{center}
+
+\newpage	
+\thispagestyle{empty}
+\hoffset=0mm
+\vspace*{\fill}
+\noindent I confirm that this bachelor's thesis is my own work and I have documented all sources and material used.\\\\
+Ich versichere, dass ich diese Bachelorarbeit selbstst\"andig verfasst und nur die angegebenen Quellen und Hilfsmittel verwendet habe.\\\\\\
+M\"unchen, \submission\\\\\\\\\\\\
+\noindent \textit{(\name)}
+
+\newpage
+\setcounter{page}{1}
+\pagenumbering{roman}
+\begin{spacing}{1.2}
+\hoffset=0mm
+\input acknowledgements
+
+\input abstract
+\end{spacing}
+
+%\setcounter{tocdepth}{3}
+%\setcounter{secnumdepth}{3}
+%\fboxsep 0mm
+
+\tableofcontents
+
+\newpage
+\setlength{\baselineskip}{3ex}
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\begin{spacing}{1.15}
+
+\acrodef{cpg}[CPG]{Code Property Graph}
+\acrodef{dfg}[DFG]{data flow graph}
+\acrodef{ast}[AST]{abstract syntax tree}
+\acrodef{cfg}[CFG]{context free grammar}
+
+\input {content/Introduction.tex}
+
+\input {content/ProblemDescription.tex}
+
+\input {content/Background.tex}
+
+\input {content/Approach.tex}
+
+\input {content/Evaluation.tex}
+
+\input {content/RelatedWork.tex}
+
+\input {content/Conclusion.tex}
+
+% \appendix % If you need an appendix
+
+\end{spacing}
+
+ % TODO: remove if glossary not needed
+%\glsaddall{} % add all defined terms to glossary, even if not referenced in text
+%\printglossaries{}
+
+%\microtypesetup{protrusion=false}
+%\listoffigures{}
+%\listoftables{}
+%\microtypesetup{protrusion=true}
+\printbibliography{}
+
+\end{document}

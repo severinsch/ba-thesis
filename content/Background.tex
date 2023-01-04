@@ -1,0 +1,44 @@
+\chapter{Background}
+\label{chapter:Background}
+\iffalse
+What is the knowledge a undergrad student needs so that he/she can understand
+your thesis? You can assume some familiarity with the very broad topic. E.g. if
+you write a thesis in the area of software analysis, you do not have to explain
+static/dynamic analysis as such (this is boring!). If you're a crypto guy, don't
+explain AES in detail unless you try to break it in your thesis. If I stumble
+across a word/term in your thesis and don't understand it, this is where I would
+look it up (or on google).
+
+Probably approx. 3-10 pages
+
+\fi 
+
+The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \ac{cpg} out of source code of a set of different programming languages.
+
+The \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key - value pairs called properties which contain general information for the element. For example, a Node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
+
+Users of the library can extend this functionality by adding additional passes, which is how we implement the hotspot collection in this thesis.
+
+% eher motivation
+% The \ac{cpg} makes it possible to find weaknesses and vulnerabilities in source code of different programming languages. Since strings are part of most software, making detailed information about them available for analysis could improve this application of the \ac{cpg}.
+
+While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis are data flow edges, which represent the data flow between different expressions.
+
+\begin{lstlisting}[label=stringCreation]
+	String s = "xyz";
+	System.out.println(s);
+\end{lstlisting}
+
+Consider the short code example in listing \ref{stringCreation}. Here, amongst others, the following nodes are part of the \ac{cpg}:
+
+\begin{itemize}
+	\item \lstinline{Literal}, representing the string literal \lstinline{"xyz"}
+	\item \lstinline{VariableDeclaration}, representing the declaration and initialization of the variable \lstinline{s}
+	\item \lstinline{DeclaredReferenceExpression}, representing the reference to the variable \lstinline{s} in line 2.
+\end{itemize}
+
+In this example, the data flows from the \lstinline{Literal} node to the \lstinline{VariableDeclaration} and from there to the \lstinline{DeclaredReferenceExpression}.
+
+The nodes connected by those egdes effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
+
+% TODO mention definition for DFG in CPG repo
