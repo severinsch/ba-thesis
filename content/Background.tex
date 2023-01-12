@@ -24,12 +24,12 @@ Users of the library can extend this functionality by adding additional passes, 
 
 While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis are data flow edges, which represent the data flow between different expressions.
 
-\begin{lstlisting}[label=stringCreation]
+\begin{lstlisting}[label={lst:stringCreation}, caption={Example code}, captionpos=b]
 	String s = "xyz";
 	System.out.println(s);
 \end{lstlisting}
 
-Consider the short code example in listing \ref{stringCreation}. Here, amongst others, the following nodes are part of the \ac{cpg}:
+Consider the short code example in listing \ref{lst:stringCreation}. Here, amongst others, the following nodes are part of the \ac{cpg}:
 
 \begin{itemize}
 	\item \lstinline{Literal}, representing the string literal \lstinline{"xyz"}

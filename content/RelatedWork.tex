@@ -3,13 +3,13 @@
 
 The challenge of statically obtaining information about the values of strings is not new and over the years there have been different approaches to it.
 
-The approach we generally follow in our implementation is described in \cite{brics} . The authors also construct a context free grammar from a flow graph, but instead of creating it on-demand, starting at the chosen hotspot node like we do, they consider the total flow graph for grammar creation. 
+We follow the approach by Christensen et al. \cite{brics}. The authors construct a context free grammar from a flow graph, but instead of creating it on-demand, starting at the chosen hotspot node like we do, they consider the total flow graph for grammar creation. 
 They use the same approximation methods for obtaining regular languages from the generated context free grammars, but instead of making the regular languages available as a regular expression they generate automata.
-Furthermore they introduce a novel formalism, the MLFA (multi-level automaton) which allows easy extraction of these automata for different hotspots. Due to the aforementioned on-demand generation of the grammar, we don't need this extraction for single hotspots the MLFA provides in our implementation.
+Furthermore they introduce a novel formalism, the \ac{mlfa} which allows easy extraction of these automata for different hotspots. Due to the aforementioned on-demand generation of the grammar, we don't need this extraction for single hotspots the \ac{mlfa} provides in our implementation.
 The authors provide a feature rich implementation\footnote{https://www.brics.dk/JSA/} of their approach and show that it efficiently produces useful results.
 
 
-In \cite{regex_types} the authors describe a type system for a minimal functional calculus, where strings have a regular expression as their type. They show that their proposed type system can produce good results when applied to their minimal calculus. While we considered implementing this approach for the analysis, there are some problems, especially due to our different requirements and prerequisites.
+Tabuchi et al. \cite{regex_types} describe a type system for a minimal functional calculus, where strings have a regular expression as their type. They show that their proposed type system can produce good results when applied to their minimal calculus. While we considered implementing this approach for the analysis, there are some problems, especially due to our different requirements and prerequisites.
 
 To use the presented approach in practice an (efficient) algorithm for type checking and type reconstruction is needed. 
 The given paper does not include those, but rather indicates several problems in constructing such algorithms for the given situation without losing some of the desired preciseness.
@@ -20,4 +20,4 @@ Additionally this approach is tailored to the mentioned calculus and utilizes sp
 The additional layer of abstraction introduced by the DFG used in the approach we chose eliminates this problem and makes adaption easier.
 
 
-In \cite{sqli_wassermann_su} Wassermann and Su present an approach comparable to ours, where they also characterize values of string variables using context free grammars. They specifically target SQL injection vulnerabilities by using the generated CFGs to check whether user input can change the syntactic structure of a query. While this approach is successful in detecting those vulnerabilities, our approach is more general and not focused on detecting one specific type of problem but rather on providing general information for unspecified further use.
+Wassermann and Su \cite{sqli_wassermann_su} present an approach comparable to ours, where they also characterize values of string variables using context free grammars. They specifically target SQL injection vulnerabilities by using the generated CFGs to check whether user input can change the syntactic structure of a query. While this approach is successful in detecting those vulnerabilities, our approach is more general and not focused on detecting one specific type of problem but rather on providing general information for unspecified further use.
