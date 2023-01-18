@@ -1,7 +1,7 @@
 \chapter{Approach and Implementation}
 \label{chapter:Approach}
 
-The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first extract a \ac{cfg} from the \ac{dfg}. In multiple steps using different methods this grammar we then approximate this grammar into a regular grammar. From this regular grammar we can create a regular expression object to provide for further analysis.
+The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first extract a \ac{cfg} from the \ac{dfg}. In multiple steps using different methods we then approximate this grammar into a regular grammar. From this regular grammar we can create a regular expression object to provide to the user for further analysis.
 
 \tikzstyle{grammar} = [
 	rectangle, 
@@ -63,11 +63,15 @@ Our Grammar contains five types of productions:
 	\item \lstinline|BinaryOpProduction|: $X \rightarrow op(Y, Z)$
 \end{itemize}
 
+Here "<terminal>" represents a terminal symbol containing a regular expression describing a string value and "$op$" is a placeholder for a string operation that is applied to some arguments.
+
 \begin{lstlisting}[label={lst:grammar_example}, caption={Example code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
 	String s(*\textcolor{red}{$^1$}*) = " foo";
 	s(*\textcolor{red}{$^2$}*) = s(*\textcolor{red}{$^3$}*) + "bar";
 	s(*\textcolor{red}{$^4$}*) = s(*\textcolor{red}{$^5$}*).trim();
 \end{lstlisting}
+
+Consider the code example in listing \ref{lst:grammar_example} for the following explanations of the different productions.
 
 \lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
 
@@ -77,7 +81,7 @@ Our Grammar contains five types of productions:
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
 For example for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string "abc". \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular lanuage \lstinline|.*|, matching all strings.
 
-\lstinline|UnaryOpProduction|s and \lstinline|BinaryOpProductions| represent function calls or other operators. The \ac{cpg} for \ref{grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create an \lstinline|Operation| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. The \lstinline|Operation| objects also contain information about possible arguments and implement the character set transformation and regular approximation needed for the approximation of the grammar described in \ref{approximation}. This language agnostic representation of string operation allows developers of the \ac{CPG} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| \lstinline|Operation|.
+\lstinline|UnaryOpProduction|s and \lstinline|BinaryOpProductions| represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create an \lstinline|Operation| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. The \lstinline|Operation| objects also contain information about possible arguments and implement the character set transformation and regular approximation needed for the approximation of the grammar described in \ref{approximation}. This language agnostic representation of string operation allows developers of the \ac{CPG} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| \lstinline|Operation|.
 
 To create the grammar for a given \ac{dfg} node, we start traversing the \ac{dfg} backwards, starting at the given node. For each visited node, we add a \lstinline|Nonterminal| to our grammar and the fitting productions.
 
@@ -94,19 +98,25 @@ To use the Mohri-Nederhof approximation algorithm, we need to eliminate all cycl
 All nonterminals are assigned a character set, containing all characters that make up the words in the language of the corresponding nonterminal. Each operation defines a character set transformation - a function $T_{op} : 2^\Sigma \rightarrow 2^\Sigma$ - that approximates how the application of the given operation changes the character set. Here $\Sigma$ represents the set of all possible characters.
 For example the character set transformation for a \lstinline|replace| operation, where a known char \lstinline|o| is replaced by a known char \lstinline|n| has the following character set transformation,
 
-\begin{math}
+\begin{align}
 	T_{replace[o, n]}(S) = 
 	\begin{cases}
 		(S \setminus \{o\}) \cup \{n\}, & \text{if } o \in S\\
 		S, & \text{if } o \notin S
 	\end{cases}
-\end{math}
+\end{align}
 
 whereas for a \lstinline|replace| operation, where the newly inserted char is not known, $S$ is transformed to $\Sigma$ if the replaced char is contained in $S$.
 
 These approximations, together with the terminals where the character set is known, for example a string literal, can be used in a fixed point computation to assign a character set $C(X)$ to each nonterminal $X$.
 
 To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$.
+
+We find those operation cycles by viewing the grammar as a graph and determining the \acp{scc} of this graph. Now for each nonterminal $N$ in a given component $C$, we check, whether it has an operation productions, and if yes, whether one of the nonterminals its right-hand side is also part of $C$. If this is the case, by definition of \acp{scc}, $N$ is reachable from this nonterminal and therefore the operation production is part of a cycle.
+
+% TODO mention that graph of SCCs is DAG (and why)?
+To determine the \acp{scc}, we use Tarjan's algorithm \cite{tarjan}. This algorithm topologically sorts the returned components in reverse order, which is necessary for the fixpoint computation used to find the charsets.
+During the computation, for a given nonterminal $N$, its charset is updated using the charsets of its successors. The reverse topological ordering of the components ensures, that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has been handled earlier.
 
 To represent character sets easily, we have two different implementations, both conforming to a common \lstinline|CharSet| interface that requires functions like \lstinline|union : CharSet -> CharSet| and \lstinline|intersect : CharSet -> CharSet|.
 
@@ -130,4 +140,48 @@ For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b'
 
 		
 \subsection{Mohri-Nederhof Approximation}
+
+\subsubsection{Strongly Regular Grammars}
+Mohri and Nederhof describe an algorithm to transform a \ac{CFG} into a strongly regular grammar that approximates the given \ac{CFG}.
+
+They define strongly regular grammars as follows:
+
+$\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$ of the grammar:
+
+\begin{align}
+	 A \mathcal{R} B \Leftrightarrow (\exists \alpha, \beta \in V^* : A \xrightarrow{*} \alpha B \beta) \land (\exists \alpha, \beta \in V^* : B \xrightarrow{*} \alpha A \beta) 
+\end{align}
+
+Here $V$ is $\Sigma \cup N$, so the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. $A \xrightarrow{*} \alpha B \beta$ means, that there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore $\mathcal{R}$ groups all nonterminals into equivalence classes, where each nonterminal in a class can be produced by each other nonterminal in the class. Those nonterminals are called mutually recursive.
+
+A grammar is strongly regular if the production rules in each such equivalence class are either all right-linear or left-linear.
+
+A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but nonterminal is on the left side of the production result.
+
+For determining if a production rule of a given equivalence class is right- or left-linear all nonterminals that are not part of the class can be considered as terminals.
+
+Therefore, to transform a \ac{cfg} into a strongly regular grammar, we only need to transform the sets of 
+mutually recursive nonterminals where not all productions are either left-linear or right-linear.
+
+\subsubsection{Transformation}
+
+TODO:
+\begin{itemize}
+	\item Transformation verstehen
+	\item Transformation hier erklären
+	\item haha joke als würd ich die verstehen können
+\end{itemize}
+
+\subsubsection{Implementation}
+
+We can view a grammar as a directed graph, with the nonterminals as nodes and an edge from a node $A$ to a node $B$ iff there is a production with $A$ on its left-hand side and $B$ contained in its right-hand side, so a production of form $A \rightarrow \alpha A \beta$.
+
+The aforementioned notion of mutual "reachability", by which $\mathcal{R}$ groups the nonterminals corresponds to \acp{scc} in this graph view of the grammar.
+
+If two nonterminals $A$ and $B$ are mutually reachable in the graph and therefore part of the same \ac{scc}, there is a sequence of productions to produce $B$ from $A$ and vice versa, which, by definition of $\mathcal{R}$, means they are in the same equivalence class of $\mathcal{R}$.
+
+Thus, to approximate a grammar we view it as a directed graph and find its \acp{scc}, determine whether all productions are of the same linearity and apply the transformation described by Mohri and Nederhof to those components where the productions are not either all left or all right-linear.
+
+In our implementation we use 
+
 
