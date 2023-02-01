@@ -1,12 +1,12 @@
 \documentclass[footsepline,footinclude=false,oneside,fontsize=11pt,paper=a4,listof=totoc,bibliography=totoc]{scrbook} % one-sided
 
 \setkomafont{disposition}{\normalfont\bfseries} % use serif font for headings
-\linespread{1.05} % adjust line spread for mathpazo font
+%\linespread{1.05} % adjust line spread for mathpazo font
 
 \usepackage{nameref}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[sc]{mathpazo}
+%\usepackage[sc]{mathpazo}
 \usepackage[american]{babel}
 \usepackage[autostyle]{csquotes}
 \usepackage[%
@@ -27,6 +27,7 @@ uniquename=init]{biblatex}
 \usepackage{tikz}
 \usetikzlibrary {positioning}
 \usetikzlibrary{shapes,arrows}
+\usetikzlibrary{automata, arrows.meta, positioning}
 \usepackage{pgf}
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
@@ -35,7 +36,9 @@ uniquename=init]{biblatex}
 \usepackage{longtable}
 \usepackage{multirow}
 \usepackage[final]{microtype}
-\usepackage{caption}
+\usepackage[singlelinecheck=false, figurename=Fig., aboveskip=7pt, belowskip=0pt]{caption}
+\setcapindent{10pt}
+
 \usepackage{prettyref}
 \usepackage{titleref}
 \usepackage[hidelinks, pdfpagelabels, pdfstartview = FitH, bookmarksopen = true, bookmarksnumbered = true,
@@ -49,7 +52,7 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 %\usepackage{titlesec}
 \usepackage{dsfont} %math symbols
 \usepackage{tabularx}
-\usepackage{subcaption}
+%\usepackage{subcaption}
 \usepackage{picture}
 \usepackage{floatflt} %float text around figures and tables
 
@@ -67,6 +70,7 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 \usetikzlibrary{positioning}
 \usetikzlibrary{calc}
 
+\usepackage{subfigure}
 
 \newcommand{\todo}[1]{\textbf{\color{red} #1}}
 

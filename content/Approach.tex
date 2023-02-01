@@ -52,16 +52,16 @@ The general approach for our implementation is adapted from the one described by
 We implemented a new \lstinline|Pass| that traverses the \ac{cpg} and collects nodes representing string values which might be of interest for further analysis. This hotspot collection includes all strings that are passed as a query to the Java SQL library and all strings in return statements.
 
 \section{Grammar Creation}
-To create the grammar for a given \ac{dfg} node, we traverse the \ac{dfg} backwards, starting at the given node. The starting node can be one of the hotspot nodes collected by the aforementioned \lstinline|Pass|, but in general the grammar creation is independent of the hotspot collection.
+To create the grammar for a given \ac{cpg} node, we traverse the \ac{dfg} backwards, starting at the given node. The starting node can be one of the hotspot nodes collected by the aforementioned \lstinline|Pass|, but in general the grammar creation is independent of the hotspot collection.
 For each visited node, we add a \lstinline|Nonterminal| and the fitting productions to our grammar. 
 
 Our Grammar contains the following five types of productions:
 \begin{itemize}
-	\item \lstinline|UnitProduction|:  $X \rightarrow Y$
-	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$
-	\item \lstinline|TerminalProduction|: $X \rightarrow \texttt{<terminal>}$
-	\item \lstinline|UnaryOpProduction|: $X \rightarrow op(Y)$
-	\item \lstinline|BinaryOpProduction|: $X \rightarrow op(Y, Z)$
+	\item \lstinline|UnitProduction|:  $X \rightarrow Y$ for references between nodes
+	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$ for concatenation of two nodes
+	\item \lstinline|TerminalProduction|: $X \rightarrow \texttt{<terminal>}$ for literal string values and other terminal symbols
+	\item \lstinline|UnaryOpProduction|: $X \rightarrow op(Y)$ for unary operations on strings
+	\item \lstinline|BinaryOpProduction|: $X \rightarrow op(Y, Z)$ for binary operations on strings
 \end{itemize}
 
 Here \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and "$op$" is a placeholder for a string operation that is applied to some arguments.
@@ -72,17 +72,17 @@ Here \texttt{<terminal>} represents a terminal symbol containing a regular expre
 	s(*\textcolor{red}{$^4$}*) = s(*\textcolor{red}{$^5$}*).trim();
 \end{lstlisting}
 
-Consider the code example in listing \ref{lst:grammar_example} for the following explanations of the different productions.
+Consider the code example in Listing \ref{lst:grammar_example} for the following explanations of the different productions.
 
-\lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
+\lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In Listing \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
 
-\lstinline|ConcatProduction|s are created for \lstinline|BinaryOperator| nodes that represent string concatenation using the \lstinline|+| operator. For the example in \ref{lst:grammar_example} the nonterminal corresponding to the \lstinline|BinaryOperator| node for the \lstinline|+| in line 2 would have a \lstinline|ConcatProduction| with the right hand side nonterminals corresponding to the nodes for \lstinline|s|$^3$ and the string literal respectively.
+\lstinline|ConcatProduction|s are created for \lstinline|BinaryOperator| nodes that represent string concatenation using the \lstinline|+| operator. For the example in Listing \ref{lst:grammar_example} the nonterminal corresponding to the \lstinline|BinaryOperator| node for the \lstinline|+| in line 2 would have a \lstinline|ConcatProduction| with the right hand side nonterminals corresponding to the nodes for \lstinline|s|$^3$ and the string literal respectively.
 % TODO implement append?
 
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
 For example for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string "abc". \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular lanuage \lstinline|.*|, matching all strings.
 
-\lstinline|UnaryOpProduction|s and \lstinline|BinaryOpProductions| represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create an \lstinline|Operation| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. The \lstinline|Operation| objects also contain information about possible arguments and implement the character set transformation and regular approximation needed for the approximation of the grammar described in \ref{approximation}. This language agnostic representation of string operation allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| \lstinline|Operation|.
+\lstinline|UnaryOpProduction|s and \lstinline|BinaryOpProductions| represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create an \lstinline|Operation| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. The \lstinline|Operation| objects also contain information about possible arguments and implement the character set transformation and regular approximation needed for the approximation of the grammar described in Section \ref{approximation}. This language agnostic representation of string operation allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| \lstinline|Operation|.
 
 \subsubsection{Improvements}
 
@@ -94,8 +94,8 @@ Additionally, we can traverse the \ac{dfg} conditionally, stopping at nodes repr
 	
 
 \section{Regular Approximation}\label{approximation}
-\subsection{Character Set Approximation}
-To use the Mohri-Nederhof approximation algorithm, we need to eliminate all cycles in our grammar that contain operation productions.
+\subsection{Character Set Approximation}\label{charsetApprox}
+To use the Mohri-Nederhof approximation algorithm \cite{mohri_nederhof}, we need to eliminate all cycles in our grammar that contain operation productions.
 All nonterminals are assigned a character set, containing all characters that make up the words in the language of the corresponding nonterminal. Each operation defines a character set transformation - a function $T_{op} : 2^\Sigma \rightarrow 2^\Sigma$ - that approximates how the application of the given operation changes the character set. Here $\Sigma$ represents the set of all possible characters.
 For example the character set transformation for a \lstinline|replace| operation, where a known char \lstinline|o| is replaced by a known char \lstinline|n| has the following character set transformation, whereas for a \lstinline|replace| operation, where the newly inserted char is not known, $S$ is transformed to $\Sigma$ if the replaced char is contained in $S$.
 
@@ -142,7 +142,7 @@ For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b'
 \subsection{Mohri-Nederhof Approximation}
 
 \subsubsection{Strongly Regular Grammars}
-Mohri and Nederhof describe an algorithm to transform a \ac{cfg} into a strongly regular grammar that approximates the given \ac{cfg}.
+Mohri and Nederhof \cite{mohri_nederhof} describe an algorithm to transform a \ac{cfg} into a strongly regular grammar that approximates the given \ac{cfg}.
 
 They define strongly regular grammars as follows:
 
@@ -164,7 +164,7 @@ Therefore, to transform a \ac{cfg} into a strongly regular grammar, we only need
 
 \subsubsection{Transformation}
 
-Mohri and Nederhof describe a more general transformation approach for productions with an arbitrary number of nonterminals on the left hand side in \cite{mohri_nederhof}. Since all productions we use have either one or two nonterminals or exactly one terminal on the right hand side, we can reduce this more general approach to the following set of rules described by Christensen et al. in \cite{brics}.
+Mohri and Nederhof describe a more general transformation approach for productions with an arbitrary number of nonterminals on the left hand side \cite{mohri_nederhof}. Since all productions we use have either one or two nonterminals or exactly one terminal on the right hand side, we can reduce this more general approach to the following set of rules described by Christensen et al.\cite{brics}.
 
 For each nonterminal $A$ in a given equivalence class $M$ add a new nonterminal $A'$.
 % TODO epsilon production wenn hotspot, bzw bei uns grammar start iwie erwähnen
@@ -201,30 +201,190 @@ Thus, to approximate a grammar we view it as a directed graph and find its \acp{
 
 \subsection{Strongly Regular Grammar to Automaton}
 
+\subsubsection{Algorithm}
+
 Nederhof describes an algorithm to transform a strongly regular grammar into an equivalent \ac{nfa} in \cite{nederhof}.
 More specifically, the algorithm creates an $\epsilon$-\ac{nfa}, which contains additional $\epsilon$ edges. The generated automaton accepts the same language as the given grammar.
 
-% TODO operation production???
+The full algorithm can be seen in Algorithm \ref{nederhof}. It creates an automaton $NFA = (K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $G = (\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
+
+The \texttt{create\_state} function used in the pseudo code just creates a new state object which can then be added to the automaton.
+
+Note that for the algorithm an operation production of form $A \rightarrow op(X)$ is treated like a unary production of form $A \rightarrow X$. The operation productions are always handled by the loop in line \ref{alg:nonrecloop} because for any operation production contained in an \ac{scc} with other nonterminals the component is broken up by the character set approximation described in section \ref{charsetApprox}. 
+How the operation productions are resolved is described in the following section. 
+
+The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar starting at $\alpha$ between those two states.
+
+This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ and a newly created accepting state $f$.
+
+For single terminals and $\epsilon$ the algorithm adds an according edge between the two nodes $q_0$ and $q_1$ in lines \ref{alg:eps} to \ref{alg:singleTerm}.
+
+When $\alpha$ contains multiple symbols, a new state $q$ is created and the automaton for the first symbol in $\alpha$ is inserted between $q_0$ and $q$ and the one for the rest of $\alpha$ between $q$ and $q_1$. 
+
+If $\alpha$ consists of just a single terminal $A$, that is not part of any set of mutually recursive nonterminals, so from $A$ there is no sequence of productions to reach $A$ again, we just continue the recursion with the right hand sides of $A$'s productions. The created automaton does not need edges or states corresponding to those non-recursive nonterminals. 
 
 
-\begin{comment}
+\begin{figure}[h]
+	\begin{minipage}[b]{.45\linewidth}
+		\begin{align*}
+			&A \rightarrow B\\
+			&A \rightarrow C\\
+			&B \rightarrow b\\
+			&C \rightarrow c
+		\end{align*}
+		\caption{Example grammar with no recursion}
+		\label{fig:nonrec:grammar}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.45\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial,
+			initial text = {}] {$q_0$};
+			\node (q1) [state, accepting, right = of q0] {$q_1$};
+			\path [-stealth, thick]
+			(q0) edge [bend right] node[below] {c}   (q1)
+			(q0) edge [bend left] node[above] {b}   (q1);
+		\end{tikzpicture}
+		\caption{Resulting automaton for the grammar in Figure \ref{fig:nonrec:grammar}}
+		\label{fig:nonrec:automaton}
+	\end{minipage}
+\end{figure}
 
-%TODO :(
-%- Probleme:
-\begin{itemize}
-	\item Strongly Regular Grammar -> Regex wsh nicht direkt möglich (nichtmal für normal regular wirklich?)
-	\item grammar -> $\epsilon$-NFA -> regex: mindestens zweiter step exponentielles wachstum in größe (eig unnötig?)
-	\item CFG, die reguläre Sprache akzeptiert -> finite automaton mit gleicher Sprache: bewiesen unsolvable (ist strongly regular nicht eig kontext frei? :()
-	\item siehe limitations in nederhof CFG -> automaton paper
-\end{itemize}
-Optionen:
-\begin{itemize}
-	\item Ansatz umstellen: von anfang an wie JSA, am ende MLFA -> DFA extracten -> DFA to regex
-	\item nederhof paper: strongly regular grammar -> finite automaton
-	\begin{itemize}
-		\item Frage: NFA oder DFA? DFA -> regex gut machbar, NFA -> regex idk?
-		\item warum sollte NFA sein wenn reguläre sprache akzeptiert
-	\end{itemize}
-\end{itemize}
 
-\end{comment}
+Consider the grammar in Figure \ref{fig:nonrec:grammar} creating just the two words $"a"$ and $"b"$. Here $A$ is a non-recursive nonterminal, where in the inital procedure call with arguments $(q_0, A, q_1)$ there are just the two recursive calls $\textproc{MAKE\_FA}(q_0, B, q_1)$ and $\textproc{MAKE\_FA}(q_0, C, q_1)$ in line \ref{alg:nonrec}. For those calls again the non-recursive case is chosen until, such that for the next recursion $\alpha$ equals $b$ or $c$ respectively, which leads the corresponding edges being created in line \ref{alg:singleTerm}. As demonstrated no edges or states are created for any of the 3 nonterminals, only for the two terminals $a$ and $b$ and the resulting automaton in Figure \ref{fig:nonrec:automaton} accepts the correct language.
+
+For the last remaining case, where $\alpha$ consists of a single nonterminal $A$ that is part of some set of mutually recursive nonterminals $N_i$, the algorithm first adds a new state for each nonterminal in $N_i$ to the graph.
+
+Then we differentiate according to the recursion type of $N_i$, which is obtained by the call to $recursive(N_i)$.
+
+Note that sets with neither left nor right recursion can be handled by either case.
+
+Now for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
+To explain the differences between the recursive calls in the different cases consider the grammars in Figures \ref{fig:rec:grammar:left} and \ref{fig:rec:grammar:right}.
+
+The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2} being inverted, which has no influence on the accepted language. Switching $q_0$ with $q_1$ and vice-versa in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, where any production sequence of n applications of $B -> Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the finale state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
+Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
+
+\begin{figure}[h]
+\subfigure{
+	\begin{minipage}[b]{.5\linewidth}
+		\begin{align*}
+			&A \rightarrow a\\
+			&A \rightarrow B\\
+			&B \rightarrow Ab
+		\end{align*}
+		\caption{Example grammar with left recursion}
+		\label{fig:rec:grammar:left}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.5\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+			thick,-stealth
+			}]
+			\node (q0) [state, initial,
+			initial text = {}] {$q_0$};
+			\node (q3) [state, right = of q0] {$q_3$};
+			\node (q1) [state, accepting, right = of q3] {$q_1$};
+			\node (q2) [state, above = of q3] {$q_2$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$a$}   (q3)
+			(q3) edge[bend right] node[right] {$b$}   (q2)
+			(q2) edge[bend right] node[left] {$\epsilon$}   (q3)
+			(q3) edge node[above] {$\epsilon$}   (q1);
+		\end{tikzpicture}
+		\caption{Resulting automaton for the grammar in Figure \ref{fig:rec:grammar:left}}
+		\label{fig:rec:automaton1}
+	\end{minipage}
+}
+\subfigure{
+	\begin{minipage}[b]{.5\linewidth}
+		\begin{align*}
+			&A \rightarrow a\\
+			&A \rightarrow B\\
+			&B \rightarrow bA
+		\end{align*}
+		\caption{Example grammar with right recursion}
+		\label{fig:rec:grammar:right}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.5\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial,
+			initial text = {}] {$q_0$};
+			\node (q3) [state, right = of q0] {$q_3$};
+			\node (q1) [state, accepting, right = of q3] {$q_1$};
+			\node (q2) [state, above = of q3] {$q_2$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$\epsilon$}   (q3)
+			(q2) edge[bend right] node[left] {$b$}   (q3)
+			(q3) edge[bend right] node[right] {$\epsilon$}   (q2)
+			(q3) edge node[above] {$a$}   (q1);
+		\end{tikzpicture}
+		\caption{Resulting automaton for the grammar in Figure \ref{fig:rec:grammar:right}}
+		\label{fig:rec:automaton2}
+	\end{minipage}
+}
+\end{figure}
+
+\begin{algorithm}[h]
+	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
+	\label{nederhof}
+	\begin{algorithmic}[1]
+		\State $\mathbf{let}$ $\Delta = \emptyset, s = \texttt{create\_state()}, f = \texttt{create\_state()}, F = \{f\}, K = \{s, f\}$
+		\State \Call{make\_fa}{$s, S, f$} \label{alg:initialCall}
+		
+		\Procedure{make\_fa}{$q_0, \alpha, q_1$}
+		\If{$\alpha = \epsilon$} \label{alg:eps}
+			\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_1)}$ \Comment{add $\epsilon$ transition from state $q_0$ to state $q_1$}
+		\ElsIf{$\alpha = a,\mathbf{\ some\ }a \in \Sigma$}
+			\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \alpha, q_1)}$ \label{alg:singleTerm}
+		\ElsIf{$\alpha = X\beta,\mathbf{\ some\ } X \in V, \beta \in V^* \mathbf{\ such\ that \ }|\beta|>0$}
+			\State  $\mathbf{let}$ $q = \texttt{create\_state()};$
+			\State \hphantom{$\mathbf{let}$} $K = K \cup \{q\}$ \Comment{create some new state $q$ and add it to the automaton}
+			\State \Call{make\_fa}{$q_0,X,q$}
+			\State \Call{make\_fa}{$q, X,q_1$}
+		\Else
+			\State  $\mathbf{let}$ $A = \alpha$ \Comment{$\alpha$ must be a single nonterminal}
+			\If{$A \in N_i \mathbf{\ some\ } i$}
+				\For{$B \in N_i$}
+					\State $\mathbf{let}$ $q_B = \texttt{create\_state()};\ K = K \cup \{q_B\}$
+				\EndFor
+				% TODO define recursive
+				\If{$recursive(N_i) = left$}
+					\For{$(C \rightarrow X_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
+						\State \Call{make\_fa}{$q_0,X_1 ... X_m,q_C$} \label{alg:left:firstrec}
+					\EndFor
+					\For{$(C \rightarrow DX_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:left}
+						\State \Call{make\_fa}{$q_D,X_1 ... X_m,q_C$}
+					\EndFor
+					\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_A, \epsilon, q_1)}$ \label{alg:left:eps}
+				\Else
+					\For{$(C \rightarrow X_1 ... X_m) \in P$  $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
+						\State \Call{make\_fa}{$q_C, X_1 ... X_m,q_1$} \label{alg:right:firstrec}
+					\EndFor
+					\For{$(C \rightarrow X_1 ... X_mD) \in P$  $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:right}
+						\State \Call{make\_fa}{$q_C,X_1 ... X_m,q_D$}
+					\EndFor
+					\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_A)}$ \label{alg:right:eps}
+				\EndIf
+			\Else
+				\For{$(A \rightarrow \beta)$} \Comment{A is not recursive} \label{alg:nonrecloop}
+					\State \Call{make\_fa}{$q_0,\beta,q_1$}  \label{alg:nonrec}
+				\EndFor
+			\EndIf
+		\EndIf
+		\EndProcedure
+		
+	\end{algorithmic}
+\end{algorithm}
+
+\subsubsection{Operation Productions}\label{opProduction}
+
+\subsection{Automaton to Regular Expression}
