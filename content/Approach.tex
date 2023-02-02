@@ -206,12 +206,13 @@ Thus, to approximate a grammar we view it as a directed graph and find its \acp{
 Nederhof describes an algorithm to transform a strongly regular grammar into an equivalent \ac{nfa} in \cite{nederhof}.
 More specifically, the algorithm creates an $\epsilon$-\ac{nfa}, which contains additional $\epsilon$ edges. The generated automaton accepts the same language as the given grammar.
 
-The full algorithm can be seen in Algorithm \ref{nederhof}. It creates an automaton $NFA = (K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $G = (\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
+The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an automaton $NFA = (K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $G = (\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
 
 The \texttt{create\_state} function used in the pseudo code just creates a new state object which can then be added to the automaton.
 
-Note that for the algorithm an operation production of form $A \rightarrow op(X)$ is treated like a unary production of form $A \rightarrow X$. The operation productions are always handled by the loop in line \ref{alg:nonrecloop} because for any operation production contained in an \ac{scc} with other nonterminals the component is broken up by the character set approximation described in section \ref{charsetApprox}. 
-How the operation productions are resolved is described in the following section. 
+Note that for the algorithm an operation production of form $A \rightarrow op(X)$ is treated like an unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines\ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production contained in a cycle, the cycle is broken up by the character set approximation described in section \ref{charsetApprox}.
+Therefore an operation production $C \rightarrow op(DX_1)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
+How the effects of the operation productions are resolved is described in the following section. 
 
 The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar starting at $\alpha$ between those two states.
 
@@ -265,7 +266,7 @@ Note that sets with neither left nor right recursion can be handled by either ca
 Now for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
 To explain the differences between the recursive calls in the different cases consider the grammars in Figures \ref{fig:rec:grammar:left} and \ref{fig:rec:grammar:right}.
 
-The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2} being inverted, which has no influence on the accepted language. Switching $q_0$ with $q_1$ and vice-versa in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, where any production sequence of n applications of $B -> Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the finale state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
+The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2} being inverted, which has no influence on the accepted language. Switching $q_0$ with $q_1$ and vice-versa in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the finale state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
 Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
 
 \begin{figure}[h]
@@ -335,7 +336,7 @@ Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:
 
 \begin{algorithm}[h]
 	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
-	\label{nederhof}
+	\label{nederhofAlg}
 	\begin{algorithmic}[1]
 		\State $\mathbf{let}$ $\Delta = \emptyset, s = \texttt{create\_state()}, f = \texttt{create\_state()}, F = \{f\}, K = \{s, f\}$
 		\State \Call{make\_fa}{$s, S, f$} \label{alg:initialCall}
@@ -387,4 +388,152 @@ Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:
 
 \subsubsection{Operation Productions}\label{opProduction}
 
+As described above, operation productions of form $C \rightarrow op(X)$ are treated like a normal production $C \rightarrow X$. 
+To apply the effect of the different operations onto the created automaton, we taint all nodes and edges if they are created in recursion calls after an operation production.
+
+If a recursive call $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. This allows us to apply the automaton-transformation required to apply the effect of an operation $op_1$ to the sub-automaton tainted with $op_1$.
+
+Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here the production $A \rightarrow F$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two identical paths, since $A \rightarrow replace[f,x](F)$ is treated like a second $A \rightarrow F$ production, just that the resulting edges and adjacent states are tainted.
+
+After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
+
+For the $replace[old, new]$ operation this transformation consists of replacing all occurrences of $old$ on tainted edges with $new$, which gives us the automaton in Figure \ref{fig:operations:automaton2} for the given example.
+
+
+
+\begin{figure}[h]
+	\begin{minipage}[b]{.3\linewidth}
+		\begin{align*}
+			&A \rightarrow F\\
+			&A \rightarrow replace[f, x](F)\\
+			&F \rightarrow fF\\
+			&F \rightarrow f\\
+		\end{align*}
+		\caption{Example grammar with operation production}
+		\label{fig:operations:grammar}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.3\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial, initial where=above,
+			initial text = {}, draw = red, fill = red!30] {$q_0$};
+			\node (q2) [state, below left = of q0] {$q_2$};
+			\node (q3) [state, below right = of q0, draw = red, fill = red!30] {$q_3$};
+			\node (q1) [state, accepting, below left = of q3, draw = red, fill = red!30] {$q_1$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$\epsilon$}   (q2)
+			(q0) edge [draw = red] node[above] {$\epsilon$}   (q3)
+			(q2) edge [loop right] node[right] {$f$}   (q2)
+			(q3) edge [loop left, draw = red] node[left] {$f$}   (q3)
+			(q2) edge node[above] {$f$}   (q1)
+			(q3) edge [draw = red] node[above] {$f$}   (q1);
+		\end{tikzpicture}
+		\caption{Resulting automaton for the grammar in Figure \ref{fig:operations:grammar}}
+		\label{fig:operations:automaton1}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.3\linewidth}
+		\begin{tikzpicture}[
+		every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial, initial where=above,
+			initial text = {}] {$q_0$};
+			\node (q2) [state, below left = of q0] {$q_2$};
+			\node (q3) [state, below right = of q0] {$q_3$};
+			\node (q1) [state, accepting, below left = of q3] {$q_1$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$\epsilon$}   (q2)
+			(q0) edge node[above] {$\epsilon$}   (q3)
+			(q2) edge [loop right] node[right] {$f$}   (q2)
+			(q3) edge [loop left] node[left] {$x$}   (q3)
+			(q2) edge node[above] {$f$}   (q1)
+			(q3) edge node[above] {$x$}   (q1);
+		\end{tikzpicture}
+		\caption{Automaton in figure \ref{fig:operations:automaton1} after applying operation transformation}
+		\label{fig:operations:automaton2}
+	\end{minipage}
+\end{figure}
+
+
 \subsection{Automaton to Regular Expression}
+
+To transform the automaton we created from a \ac{srg}, we use the state elimination strategy, also known as the Brzozowski-McCluskey procedure \cite{brzozowksi_mccluskey}.
+
+To apply the procedure an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
+Also a \ac{gnfa} must only have a single start state and a single end state \cite{hanGNFA}.
+
+To achieve this characteristic, one can add a new start state with a single $\epsilon$ transition to the old start state and a new finale state with incoming $\epsilon$ edges from all previously accepting states.
+
+However, due to the automaton construction using the Nederhof algorithm described above, the automata we obtain already fulfill this property without any need for further modification.
+
+
+To eliminate a state $q$, we first replace each pair of edges $(q_0, r_1, q1), (q_0, r_2, q1)$ between two states with a single edge $(q_0, r_1|r_2, q_1)$ .
+
+Now, we "shortcut" the state by replacing all pairs of transitions $(q',r, q), (q, t, q'')$ with a new transition from $q'$ to $q''$.
+The new transition is $(q', rt, q'')$ if $q$ has no loop edge to itself and $(q', rs^*t, q'')$ if it has one with label $s$ \cite{esparza}.
+
+Figures \ref{fig:stateelim:rule2} and \ref{fig:stateelim:rule3} contain examples adapted from Esparza \cite{esparza} that visualize those rules.
+
+After repeatedly applying the two rules, the resulting automaton contains only the start and the end state. The single edge between those two states then has the resulting regular expression as a label.
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+				every initial by arrow/.style = {
+			thick,-stealth
+		}]
+		\node (q0) [state] {$q_0$};
+		\node (q1) [state, right = of q0] {$q_1$};
+		\node (arrow) [right = of q1] {$\Longrightarrow$};
+		\node (q0') [state, right = of arrow] {$q_0$};
+		\node (q1') [state, right = of q0'] {$q_1$};
+		\path [-stealth, thick]
+		(q0) edge[bend left] node[above] {$r_1$}   (q1)
+		(q0) edge[bend right] node[below] {$r_2$}   (q1)
+		(q0') edge node[above] {$r_1 | r_2$}   (q1');
+	\end{tikzpicture}
+	\caption{Replacement of edge pairs}
+	\label{fig:stateelim:rule2}.
+\end{figure}
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}
+		every initial by arrow/.style = {
+			thick,-stealth
+		}]
+		\node at (0,3) (q0) [state] {$q_0$};
+		\node at (0,0) (q1) [state] {$q_1$};
+		\node at (2,1.5) (q4) [state] {$q_4$};
+		\node at (4,3) (q2) [state] {$q_2$};
+		\node at (4,0) (q3) [state] {$q_3$};
+		
+		\node at (5.5, 1.5) (arrow) {$\Longrightarrow$};
+		
+		\node at (7,3) (q0') [state] {$q_0$};
+		\node at (7,0) (q1') [state] {$q_1$};
+		\node at (11,3) (q2') [state] {$q_2$};
+		\node at (11,0) (q3') [state] {$q_3$};
+		
+		\path [-stealth, thick]
+		(q0) edge node[above] {$r_1$} (q4)
+		(q1) edge node[below] {$r_n$} (q4)
+		
+		(q4) edge[loop above] node {$s$} (q4)
+		
+			 edge node[above] {$t_1$} (q2)
+			 edge node[below] {$r_m$} (q3)
+		
+		
+		(q0') edge node[above] {$r_1s^*t_1$} (q2')
+		(q1') edge node[above left,  xshift=7, yshift=-33] {$r_ns^*t_1$} (q2')
+		(q0') edge node[below right, xshift=-29, yshift=35] {$r_1s^*t_m$} (q3')
+		(q1') edge node[below] {$r_ns^*t_m$} (q3');
+	\end{tikzpicture}
+	\caption{Elimination of state $q_4$}
+	\label{fig:stateelim:rule3}.
+\end{figure}
