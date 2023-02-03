@@ -204,13 +204,13 @@ Thus, to approximate a grammar we view it as a directed graph and find its \acp{
 \subsubsection{Algorithm}
 
 Nederhof describes an algorithm to transform a strongly regular grammar into an equivalent \ac{nfa} in \cite{nederhof}.
-More specifically, the algorithm creates an $\epsilon$-\ac{nfa}, which contains additional $\epsilon$ edges. The generated automaton accepts the same language as the given grammar.
+More specifically, the algorithm creates an $\epsilon$-\ac{nfa}. The generated automaton always accepts the same language as the given grammar.
 
 The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an automaton $NFA = (K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $G = (\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
 
 The \texttt{create\_state} function used in the pseudo code just creates a new state object which can then be added to the automaton.
 
-Note that for the algorithm an operation production of form $A \rightarrow op(X)$ is treated like an unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines\ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production contained in a cycle, the cycle is broken up by the character set approximation described in section \ref{charsetApprox}.
+Note that for the general algorithm an operation production of form $A \rightarrow op(X)$ is treated like an unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines\ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production initially contained in a cycle, the cycle is broken up by the character set approximation described in Section \ref{charsetApprox}.
 Therefore an operation production $C \rightarrow op(DX_1)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
 How the effects of the operation productions are resolved is described in the following section. 
 
@@ -222,7 +222,7 @@ For single terminals and $\epsilon$ the algorithm adds an according edge between
 
 When $\alpha$ contains multiple symbols, a new state $q$ is created and the automaton for the first symbol in $\alpha$ is inserted between $q_0$ and $q$ and the one for the rest of $\alpha$ between $q$ and $q_1$. 
 
-If $\alpha$ consists of just a single terminal $A$, that is not part of any set of mutually recursive nonterminals, so from $A$ there is no sequence of productions to reach $A$ again, we just continue the recursion with the right hand sides of $A$'s productions. The created automaton does not need edges or states corresponding to those non-recursive nonterminals. 
+If $\alpha$ consists of just a single terminal $A$, that is not part of any set of mutually recursive nonterminals, so from $A$ there is no sequence of productions to reach $A$ again, we just continue the recursion with the right hand sides of $A$'s productions. The created automaton does not need edges or states corresponding to those single non-recursive nonterminals. 
 
 
 \begin{figure}[h]
@@ -255,7 +255,7 @@ If $\alpha$ consists of just a single terminal $A$, that is not part of any set 
 \end{figure}
 
 
-Consider the grammar in Figure \ref{fig:nonrec:grammar} creating just the two words $"a"$ and $"b"$. Here $A$ is a non-recursive nonterminal, where in the inital procedure call with arguments $(q_0, A, q_1)$ there are just the two recursive calls $\textproc{MAKE\_FA}(q_0, B, q_1)$ and $\textproc{MAKE\_FA}(q_0, C, q_1)$ in line \ref{alg:nonrec}. For those calls again the non-recursive case is chosen until, such that for the next recursion $\alpha$ equals $b$ or $c$ respectively, which leads the corresponding edges being created in line \ref{alg:singleTerm}. As demonstrated no edges or states are created for any of the 3 nonterminals, only for the two terminals $a$ and $b$ and the resulting automaton in Figure \ref{fig:nonrec:automaton} accepts the correct language.
+To show why this is the case, consider the grammar in Figure \ref{fig:nonrec:grammar} creating just the two words $"b"$ and $"c"$. Here $A$, $B$ and $C$ are non-recursive nonterminals, so in the initial procedure call with arguments $(q_0, A, q_1)$ there are just the two recursive calls $\textproc{MAKE\_FA}(q_0, B, q_1)$ and $\textproc{MAKE\_FA}(q_0, C, q_1)$ in line \ref{alg:nonrec}. For those calls again the non-recursive case is chosen, such that for the next recursions $\alpha$ equals $b$ or $c$ respectively, which leads the corresponding edges being created in line \ref{alg:singleTerm}. As demonstrated no edges or states are created for any of the 3 nonterminals, only for the two terminals $a$ and $b$ and the resulting automaton in Figure \ref{fig:nonrec:automaton} accepts the correct language.
 
 For the last remaining case, where $\alpha$ consists of a single nonterminal $A$ that is part of some set of mutually recursive nonterminals $N_i$, the algorithm first adds a new state for each nonterminal in $N_i$ to the graph.
 
@@ -266,7 +266,13 @@ Note that sets with neither left nor right recursion can be handled by either ca
 Now for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
 To explain the differences between the recursive calls in the different cases consider the grammars in Figures \ref{fig:rec:grammar:left} and \ref{fig:rec:grammar:right}.
 
-The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2} being inverted, which has no influence on the accepted language. Switching $q_0$ with $q_1$ and vice-versa in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the finale state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
+Nederhof only defines the case for left recursion in his publication and states that the else part is "the converse of the then part" \cite{nederhof}. This suggests, that besides switching the condition for the second loop from $C \rightarrow DX_1 \ldots X_m$ to  $C \rightarrow X_1 \ldots X_mD$, switching the order of the states passed to the recursive calls suffices for handling the right recursive case.
+
+However, only changing e.g. $\textproc{MAKE\_FA}(q_0, X_1 \ldots X_m, Q_C)$ leads to incorrect results. Applying this version of the algorithm to a fully right recursive grammar returns a graph with correct states and correct edges with the only difference to a correct solution being, that the start and the end state are switched. To get correct results, besides switching the argument order, all occurrences of $q_0$ as an argument to recursive calls need to be replaced with $q_1$ and vice-versa $q_1$ with $q_0$.
+
+The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2} being inverted, which has no influence on the accepted language. 
+
+Switching $q_0$ and $q_1$ in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the finale state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
 Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
 
 \begin{figure}[h]
@@ -461,29 +467,56 @@ For the $replace[old, new]$ operation this transformation consists of replacing 
 
 \subsection{Automaton to Regular Expression}
 
+\subsubsection{State elimination}
+
 To transform the automaton we created from a \ac{srg}, we use the state elimination strategy, also known as the Brzozowski-McCluskey procedure \cite{brzozowksi_mccluskey}.
 
-To apply the procedure an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
+To apply the procedure, an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
 Also a \ac{gnfa} must only have a single start state and a single end state \cite{hanGNFA}.
 
 To achieve this characteristic, one can add a new start state with a single $\epsilon$ transition to the old start state and a new finale state with incoming $\epsilon$ edges from all previously accepting states.
 
 However, due to the automaton construction using the Nederhof algorithm described above, the automata we obtain already fulfill this property without any need for further modification.
+We also use regular expressions as edge labels from the start.
 
 
-To eliminate a state $q$, we first replace each pair of edges $(q_0, r_1, q1), (q_0, r_2, q1)$ between two states with a single edge $(q_0, r_1|r_2, q_1)$ .
+We first replace each pair of edges $(q_0, r_1, q1), (q_0, r_2, q1)$ between two states with a single edge $(q_0, r_1|r_2, q_1)$.
+After applying this replacement rule exhaustively, there are no two states $q_0$ and $q_1$ with more than one direct edge between them.
 
-Now, we "shortcut" the state by replacing all pairs of transitions $(q',r, q), (q, t, q'')$ with a new transition from $q'$ to $q''$.
+To eliminate a state $q$, we "shortcut" the state by replacing all pairs of transitions $(q',r, q), (q, t, q'')$ with a new transition from $q'$ to $q''$.
 The new transition is $(q', rt, q'')$ if $q$ has no loop edge to itself and $(q', rs^*t, q'')$ if it has one with label $s$ \cite{esparza}.
 
 Figures \ref{fig:stateelim:rule2} and \ref{fig:stateelim:rule3} contain examples adapted from Esparza \cite{esparza} that visualize those rules.
 
-After repeatedly applying the two rules, the resulting automaton contains only the start and the end state. The single edge between those two states then has the resulting regular expression as a label.
+After repeatedly applying the two rules and eliminating all other states, the resulting automaton contains only the start and the end state. The single edge between those two states then has the resulting regular expression as a label.
+
+\subsubsection{Delgado heuristic}
+
+The order in which states are eliminated affects the size of the resulting regular expression. There exist different heuristics for choosing an elimination order to minimize the expression size.
+
+We chose a heuristic described by Delgado and Morais \cite{delgado}.
+For each state a weight is calculated using the following formula, where $In_q$ is the set of incoming edges of $q$, $Out_q$ the set of outgoing edges, $W_e$ the size of the label on any edge $e$. $Out_q$ and $In_q$ both do not contain a potential loop on $q$. $W_{loop}$ is the size of the loop around $q$ if it exists and $0$ otherwise. 
+
+
+\begin{align*}
+	&weight(q) = 
+	&\sum_{e \in In_q} (W_{e} \times (|Out_q| - 1)) + \sum_{e \in Out_q} (W_{e} \times (|In_q| - 1)) + W_{loop} \times (|In_q| \times |Out_q| - 1)
+\end{align*}
+
+The weight represents the length of the expression added to the result by removing this state.
+Therefore, in each algorithm run, the state with the smallest weight is chosen for elimination.
+
+Delgado and Morais show that using this heuristic produces significantly shorter expressions compared to the naive state elimination. Gruber et al. also show it outperforms almost all other heuristics they considered \cite{gruber}.
+Improving the algorithm further by implementing a look-ahead additionally to the heuristic also improves the results, but adds more complexity and impairs the algorithms performance \cite{delgado}.
+
+% further work:
+% combine with multiple strategies: https://arxiv.org/pdf/1008.1656.pdf
+% 
 
 \begin{figure}
 	\centering
 	\begin{tikzpicture}
-				every initial by arrow/.style = {
+		every initial by arrow/.style = {
 			thick,-stealth
 		}]
 		\node (q0) [state] {$q_0$};
@@ -520,8 +553,8 @@ After repeatedly applying the two rules, the resulting automaton contains only t
 		\node at (11,0) (q3') [state] {$q_3$};
 		
 		\path [-stealth, thick]
-		(q0) edge node[above] {$r_1$} (q4)
-		(q1) edge node[below] {$r_n$} (q4)
+		(q0) edge node[above, xshift=2] {$r_1$} (q4)
+		(q1) edge node[below, xshift=2] {$r_n$} (q4)
 		
 		(q4) edge[loop above] node {$s$} (q4)
 		
