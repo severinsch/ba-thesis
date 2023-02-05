@@ -1,6 +1,6 @@
 \chapter{Background}
 \label{chapter:Background}
-\iffalse
+\begin{comment}
 What is the knowledge a undergrad student needs so that he/she can understand
 your thesis? You can assume some familiarity with the very broad topic. E.g. if
 you write a thesis in the area of software analysis, you do not have to explain
@@ -10,9 +10,9 @@ across a word/term in your thesis and don't understand it, this is where I would
 look it up (or on google).
 
 Probably approx. 3-10 pages
+\end{comment}
 
-\fi 
-
+\section{Code Property Graph}
 The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \ac{cpg} out of source code of a set of different programming languages.
 
 The \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key - value pairs called properties which contain general information for the element. For example, a Node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
@@ -29,16 +29,32 @@ While the \ac{cpg} contains many different types of edges, the most relevant edg
 	System.out.println(s);
 \end{lstlisting}
 
-Consider the short code example in listing \ref{lst:stringCreation}. Here, amongst others, the following nodes are part of the \ac{cpg}:
+Consider the short code example in listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:]]
 
 \begin{itemize}
-	\item \lstinline{Literal}, representing the string literal \lstinline{"xyz"}
-	\item \lstinline{VariableDeclaration}, representing the declaration and initialization of the variable \lstinline{s}
-	\item \lstinline{DeclaredReferenceExpression}, representing the reference to the variable \lstinline{s} in line 2.
+	\item \lstinline|Literal|, representing the string literal \lstinline{"xyz"}
+	\item \lstinline|VariableDeclaration|, representing the declaration and initialization of the variable \lstinline|s|
+	\item \lstinline|DeclaredReferenceExpression|, representing the reference to the variable \lstinline|s| in line 2.
 \end{itemize}
 
-In this example, the data flows from the \lstinline{Literal} node to the \lstinline{VariableDeclaration} and from there to the \lstinline{DeclaredReferenceExpression}.
+In this example, the data flows from the \lstinline|Literal| node to the \lstinline|VariableDeclaration| and from there to the \lstinline|DeclaredReferenceExpression|.
 
 The nodes connected by those egdes effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
 
 % TODO mention definition for DFG in CPG repo
+
+\section{Strongly Regular Grammars}\label{sec:background:srg}
+
+$\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$ of some grammar:
+
+\begin{align}
+	A \mathcal{R} B \Leftrightarrow (\exists \alpha, \beta \in V^* : A \xrightarrow{*} \alpha B \beta) \land (\exists \alpha, \beta \in V^* : B \xrightarrow{*} \alpha A \beta) 
+\end{align}
+
+Here $V$ is $\Sigma \cup N$, so the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. $A \xrightarrow{*} \alpha B \beta$ means, that there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, where each nonterminal in a class can be produced by each other nonterminal in the class. Those nonterminals are called mutually recursive.
+
+A grammar is strongly regular if the production rules in each such equivalence class are either all right-linear or left-linear.
+
+A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
+
+

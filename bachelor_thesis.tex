@@ -54,7 +54,6 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 \usepackage{tabularx}
 %\usepackage{subcaption}
 \usepackage{picture}
-\usepackage{floatflt} %float text around figures and tables
 
 \usepackage{enumitem} %resume counting from previous enumerate block
 \usepackage{amsmath,amssymb}
@@ -62,15 +61,33 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 \usepackage{color}
 \usepackage{algpseudocode} %for listing pseudocode
 \usepackage{algorithm} %wrap algpseudocode and enrich with label etc.
-\usepackage{float} % for [H] after floats
-\usepackage{floatflt}
+%\usepackage{float} % for [H] after floats
+%\usepackage{floatflt}
 \usepackage{xparse}
 \usepackage{verbatim}
 \usetikzlibrary{arrows,automata}
 \usetikzlibrary{positioning}
 \usetikzlibrary{calc}
 
-\usepackage{subfigure}
+\usepackage{subfig}
+
+\DeclareCaptionLabelFormat{custom}
+{%
+	#1 (#2)
+}
+% Separator style
+\DeclareCaptionLabelSeparator{custom}{}
+% Caption format    
+\DeclareCaptionFormat{custom}
+{%
+	\small#1#2 #3
+}
+\captionsetup
+{
+	format=custom,%
+	labelformat=custom,%
+	labelsep=custom
+}
 
 \newcommand{\todo}[1]{\textbf{\color{red} #1}}
 
