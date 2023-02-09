@@ -1,6 +1,114 @@
 \chapter{Evaluation and Discussion}
 \label{chapter:Evaluation}
 
+\subsection{Results}
+
+\subsubsection{Tricky}
+
+We adapted the \lstinline|Tricky| example code Christensen et al. created for their implementation, which can be seen in Listing \ref{lst:tricky}.
+
+We create the grammar starting at the node representing the variable reference \lstinline|res| in line \ref{lst:tricky:sout}.
+After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
+The difference to the corresponding grammar Christensen et al. created stems from differences in the definition and implementation of the data flow graph.
+
+
+The \ac{nfa} created from the grammar contains 28 states and 40 transitions, of which 27 are $\epsilon$ transitions, and is to large to display in this thesis.
+The \acp{nfa} created using Nederhofs algorithm in general often have unnecessary states and transitions, like chains of states only connected with $\epsilon$ transitions.
+With a length of 622 characters, the regular expression we obtain is more complex than necessary. However it accepts the correct language described with the expression \lstinline|\(*<int>([+*]<int>\))*| by Christensen et al. \cite{brics}, where \lstinline|<int>| abbreviates the expression \lstinline@0|(-?[1-9][0-9]*)@. Christensen et al. don't  
+
+Note that our implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 120 characters compared to escaping using a backslash.
+To increase readability we use the \lstinline|<int>| abbreviation and replace the \lstinline|\Q\E| esape characters with single backslashes in the following regular expressions.
+
+Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an equivalent \ac{dfa} significantly improves the result. The corresponding regular expression for this \ac{dfa}, which can be seen in Figure \ref{fig:eval:tricky:dfa}, is \lstinline[basicstyle=\small\ttfamily]@(((\((\()*(<int>)|<int>)(\*|\+))(((<int>)\))(\*|\+))*((<int>)\)))|(\((\()*(<int>)|<int>)@.
+
+Minimizing this \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which is transformed to the regular expression \lstinline[basicstyle=\small\ttfamily]@(\()*<int>((\*|\+)<int>\))*@.
+
+As Christensen et al. mention, this expression is a good result, but by distinguishing the two calls to the \lstinline|bar| method, an even more precise expression could be obtained. Due to the given properties of the \ac{cpg} creation, this is currently not an option for our implementation.
+
+
+
+\begin{figure}
+	\begin{tikzpicture}[
+		every initial by arrow/.style = {
+			thick,-stealth
+		}]
+		\node (q0) [state, initial, initial where=left,
+		initial text = {}] {$q_0$};
+		\node (q1) [state, above right = of q0] {$q_1$};
+		\node (q2) [state, accepting, below right = of q1] {$q_2$};
+		\node (q3) [state, right = 2cm of q2] {$q_3$};
+		\node (q4) [state, above right = of q3] {$q_4$};
+		\node (q5) [state, accepting, below right = of q4] {$q_5$};
+		\path [-stealth, thick]
+		(q0) edge[bend left] node[above left] {(}   (q1)
+		(q1) edge [loop above] node[above] {(}   (q1)
+		(q0) edge node[above] {<int>}   (q2)
+		(q1) edge[bend left] node[above right] {<int>}   (q2)
+		(q2) edge[bend right] node[above] {+}   (q3)
+		(q2) edge[bend left] node[below] {*}   (q3)
+		(q3) edge[bend left] node[above left] {<int>}   (q4)
+		(q4) edge[bend left] node[above right] {)}   (q5)
+		(q5) edge[bend left] node[above] {+}   (q3)
+		(q5) edge[bend right] node[below] {*}   (q3);
+	\end{tikzpicture}
+	\caption{\ac{dfa} for \lstinline|Tricky| example}
+	\label{fig:eval:tricky:dfa}
+\end{figure}
+
+\begin{figure}
+	\begin{tikzpicture}[
+		every initial by arrow/.style = {
+			thick,-stealth
+		}]
+		\node (q0) [state, initial, initial where=left,
+		initial text = {}] {$q_0$};
+		\node (q1) [state, accepting, right = of q0] {$q_1$};
+		\node (q2) [state, below right = of q1] {$q_2$};
+		\node (q3) [state, above right = of q1] {$q_3$};
+		\path [-stealth, thick]
+		(q0) edge [loop above] node[above] {(}   (q0)
+		(q0) edge node[above] {<int>}   (q1)
+		(q1) edge[bend right] node[above] {+}   (q2)
+		(q1) edge[bend left] node[below] {*}   (q2)
+		(q2) edge[bend right] node[right] {<int>}   (q3)
+		(q3) edge[bend right] node[above left] {)}   (q1);
+	\end{tikzpicture}
+	\caption{Minimal \ac{dfa} for \lstinline|Tricky| example}
+	\label{fig:eval:tricky:dfamin}
+\end{figure}
+
+
+\begin{lstlisting}[float, escapechar=|, numbers=left, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small]
+public class Tricky{
+	String bar(int n, int k, String op) {
+		if (k==0) {
+			return "";
+		}
+		return op+n+"]"+bar(n-1,k-1,op)+"";
+	}
+	String foo(int n) {
+		String b = "";
+		if (n<2) {
+			b = b + "(";
+		}
+		for (int i=0; i<n; i++){
+			b = b + "(";
+		}
+		String s = bar(n-1,n/2-1,"*");
+		String t = bar(n-n/2,n-(n/2-1),"+");
+		return b+n+(s+t).replace(']',')');
+	}
+	public static void main(String args[]) {
+		int n = new Random().nextInt();
+		String res = new Tricky().foo(n);
+		System.out.println(res); |\label{lst:tricky:sout}|
+	}
+}
+\end{lstlisting}
+
+\subsection{Performance}
+
+\begin{comment}
 \begin{itemize}
 \item How did you test/evaluate your PoC?
     \begin{itemize}
@@ -18,3 +126,4 @@
 \end{itemize}
 
 Probably 5-15 pages
+\end{comment}

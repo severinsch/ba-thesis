@@ -104,7 +104,7 @@ In this case, we can add a \lstinline|TerminalProduction| with the \lstinline|Te
 
 \section{Regular Approximation}\label{sec:approximation}
 \subsection{Character Set Approximation}\label{sec:charsetApprox}
-To use the Mohri-Nederhof approximation algorithm \cite{mohri_nederhof} described in Section \ref{sec:mohriNederhofApprox}, we need to eliminate all cycles in our grammar that contain operation productions\cite{mohri_nederhof}.
+To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we need to eliminate all cycles in our grammar that contain operation production s\cite{mohri_nederhof}.
 
 First, we view the grammar as a graph in which each symbol of the grammar corresponds to one graph node and for each production there are edges from the nonterminal on the left hand side to all symbols on the right hand side. 
 For two nonterminals $A$ and $B$ there is an edge from the node corresponding to $A$ to the one corresponding to $B$ iff there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
@@ -614,6 +614,10 @@ Therefore, in each algorithm run, the state with the smallest weight is chosen f
 
 Delgado and Morais show that using this heuristic produces significantly shorter expressions compared to the naive state elimination \cite{delgado}. Gruber et al. also show it outperforms almost all other heuristics they considered \cite{gruber}.
 Improving the algorithm further by implementing a look-ahead additionally to the heuristic also improves the results, but adds more complexity and impairs the algorithms performance \cite{delgado}.
+
+Another reduction of the regular expression size can often be obtained by first converting the automaton to a \ac{dfa}, for example using the powerset construction. For a given \ac{nfa} with $n$ states, the \ac{dfa} obtained by using the powerset construction to convert the \ac{nfa} can have up to $2^n$ states. However, we observed that for most \acp{nfa} generated using Nederhof's algorithm, the resulting \acp{dfa} is significantly smaller than the input \ac{nfa} or even minimal. This \ac{dfa} can be minimized using common algorithms like Hopcroft's or Brzozowski's algorithm for even better results.
+
+Since it is unclear, whether conversion to \acp{dfa} always leads to better results, we can use both approaches and return the shorter expression.
 
 % TODO further work:
 % combine with multiple strategies: https://arxiv.org/pdf/1008.1656.pdf
