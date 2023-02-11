@@ -1,7 +1,9 @@
 \chapter{Evaluation and Discussion}
 \label{chapter:Evaluation}
 
-\subsection{Results}
+\section{Evaluation and Benchmarking}
+
+\subsection{Correctness}
 
 \subsubsection{Tricky}
 
@@ -14,16 +16,19 @@ The difference to the corresponding grammar Christensen et al. created stems fro
 
 The \ac{nfa} created from the grammar contains 28 states and 40 transitions, of which 27 are $\epsilon$ transitions, and is to large to display in this thesis.
 The \acp{nfa} created using Nederhofs algorithm in general often have unnecessary states and transitions, like chains of states only connected with $\epsilon$ transitions.
-With a length of 622 characters, the regular expression we obtain is more complex than necessary. However it accepts the correct language described with the expression \lstinline|\(*<int>([+*]<int>\))*| by Christensen et al. \cite{brics}, where \lstinline|<int>| abbreviates the expression \lstinline@0|(-?[1-9][0-9]*)@. Christensen et al. don't  
+With a length of 622 characters, the regular expression we obtain is more complex than necessary. However it accepts the correct language described with the expression \Verb|\(*<int>([+*]<int>\))*| by Christensen et al. \cite{brics}, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@. Note that Christensen et al. only create automata and not regular expressions, so this expression is just to describe their created automaton. How their automaton compares to ours is unclear, as they only share this description of the language.
 
-Note that our implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 120 characters compared to escaping using a backslash.
+Also note that our implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 120 characters compared to escaping using a backslash.
 To increase readability we use the \lstinline|<int>| abbreviation and replace the \lstinline|\Q\E| esape characters with single backslashes in the following regular expressions.
 
-Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an equivalent \ac{dfa} significantly improves the result. The corresponding regular expression for this \ac{dfa}, which can be seen in Figure \ref{fig:eval:tricky:dfa}, is \lstinline[basicstyle=\small\ttfamily]@(((\((\()*(<int>)|<int>)(\*|\+))(((<int>)\))(\*|\+))*((<int>)\)))|(\((\()*(<int>)|<int>)@.
+Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an equivalent \ac{dfa} significantly improves the result. The corresponding regular expression for this \ac{dfa}, which can be seen in Figure \ref{fig:eval:tricky:dfa}, is 
+\begin{Verbatim}[breaklines=true, breakanywhere=true]
+(((\((\()*(<int>)|<int>)(\*|\+))(((<int>)\))(\*|\+))*((<int>)\)))|(\((\()*(<int>)|<int>)
+\end{Verbatim}
 
-Minimizing this \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which is transformed to the regular expression \lstinline[basicstyle=\small\ttfamily]@(\()*<int>((\*|\+)<int>\))*@.
+Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which is transformed to the regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@.
 
-As Christensen et al. mention, this expression is a good result, but by distinguishing the two calls to the \lstinline|bar| method, an even more precise expression could be obtained. Due to the given properties of the \ac{cpg} creation, this is currently not an option for our implementation.
+As Christensen et al. mention, this expression is a good result, but by distinguishing the two calls to the \lstinline|bar| method, an even more precise expression could be obtained \cite{brics}. Due to the given properties of the \ac{cpg} creation, this is currently not an option for our implementation.
 
 
 
@@ -78,7 +83,7 @@ As Christensen et al. mention, this expression is a good result, but by distingu
 \end{figure}
 
 
-\begin{lstlisting}[float, escapechar=|, numbers=left, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small]
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small]
 public class Tricky{
 	String bar(int n, int k, String op) {
 		if (k==0) {
@@ -107,6 +112,54 @@ public class Tricky{
 \end{lstlisting}
 
 \subsection{Performance}
+
+\section{Discussion and Future work}
+
+\subsection{Assertions}
+
+Our implementation currently does not try to evaluate assertions like \lstinline|s.isEmpty()| due to limitations in the creation of the \ac{cpg} we use.
+
+Consider the example in Listing \ref{lst:assertions} where \lstinline|getSomeKnownValue()| returns some value we can analyze, which is henceforth abbreviated with the generic \lstinline|<val>|.
+
+In our \ac{cpg} the only incoming \ac{dfg} edge of \lstinline|s|$^3$ in line \ref{lst:assertions:ifbody} is an edge from \lstinline|s|$^1$ in line \ref{lst:assertions:def}. However, there is an implicit information flow from \lstinline|s|$^2$ in line \ref{lst:assertions:condition} to \lstinline|s|$^3$, as the result of applying the \lstinline|isEmpty| operation on \lstinline|s|$^2$ influences the information we can get about \lstinline|s|$^3$. If there was a \ac{dfg} edge to the \lstinline|s|$^2$\lstinline|.isEmpty()| call from \lstinline|s|$^3$ instead of the edge from \lstinline|s|$^1$, we could include the operation in our analysis.
+
+For example, for such an edge, we could add a new type of production comparable to the existing operation productions, from the nonterminal representing \lstinline|s|$^3$ to the one representing \lstinline|s|$^2$.
+
+To resolve such an assertion production $A \rightarrow assertion(B)$ we could implement transformations similar to the existing operation productions. For this example, the transformation of the $isEmpty$ assertion would always return just the empty string.
+In Listing \ref{lst:assertions}, we could always infer that \lstinline|s|$^3$ is empty, which is clear from the code.
+
+For this example we currently get the regular expression \Verb@(<val>empty)|(<val>)@ as a result. 
+Consider \Verb@<val>@ to be \lstinline[mathescape]@abc|$\epsilon$@, which gives us \lstinline[mathescape]@((abc|$\epsilon$)empty)|(abc|$\epsilon$)@ as our current result.
+Here the first part \lstinline[mathescape]@((abc|$\epsilon$)empty)@ corresponds to the value of \lstinline|s|$^4$, which is a possible value of the analyzed \lstinline|s|$^5$ and the second part \lstinline[mathescape]@(abc|$\epsilon$)@ to the value of \lstinline|s|$^1$, which is the result if the condition evaluates to false.
+
+With the mentioned additional \ac{dfg} edges and the described logic, we could sharpen this result.
+As mentioned above, the value of \lstinline|s|$^3$ would be $\epsilon$ due to the \lstinline|isEmpty| assertion transformation and therefore \lstinline|s|$^4$ would be a concatenation of $\epsilon$ and the string \lstinline|"empty"|, so just \lstinline|empty|.
+
+This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which is more precise.
+
+Similar transformations could also be defined for more complex assertions like \lstinline|s.length() == 1|.
+
+However, as mentioned above, this is currently not possible because the \ac{cpg} is missing the required \ac{dfg} edges representing this implicit information flow from an assertion to subsequent variable usages.
+
+\begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, captionpos=b, float, numbers=right, escapechar=|]
+String s|\textcolor{red}{$^1$}| = getSomeKnownValue(); |\label{lst:assertions:def}|
+if(s|\textcolor{red}{$^2$}|.isEmpty()){ |\label{lst:assertions:condition}|
+	s|\textcolor{red}{$^4$}| = s|\textcolor{red}{$^3$}| + "empty"; |\label{lst:assertions:ifbody}|
+}
+System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
+\end{lstlisting}
+
+\section{Automata Centric Approach}
+
+We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
+However, representing the information as \acp{dfa} instead of converting the automata to regular expressions has some advantages due to theoretical properties of \acp{dfa}.
+
+Regular expression objects in most programming languages, for example Kotlin's \lstinline|Regex| object, determine, whether a given string matches the expression. With a sufficiently advanced automaton implementation more advanced checks can be made.
+After analyzing a given hotspot and obtaining an automaton $M$, instead of just matching a given string as a query, the input can be a regular expression. This regular expression can then be turned into another \ac{dfa} $N$.
+Since \acp{dfa} are closed under intersection and complement, we can build the \ac{dfa} $R = M \cap \overline{N}$, which accepts words that are in the language of the analysis result, but not in the language of the query expression.
+Now we can check, whether $R$'s language is empty to determine, whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a string from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
+Additionally, we can check whether $M$ and $N$ are equivalent.
+
 
 \begin{comment}
 \begin{itemize}
