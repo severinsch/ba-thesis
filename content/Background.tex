@@ -12,6 +12,40 @@ look it up (or on google).
 Probably approx. 3-10 pages
 \end{comment}
 
+\section{Preliminaries}
+
+\subsection{Formal Grammars}
+
+A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start symbol.
+
+In examples of grammars, we use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first production is considered to be the start symbol.
+
+\acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
+Regular grammars are \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. A grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular, as the nonterminal is the last symbol in the first production but the first symbol in the latter.
+
+\subsection{Automata}
+
+A \acf{dfa} consists of a set of states $Q$, an alphabet of input symbols $\Sigma$, a transition function $\delta: Q \times \Sigma \rightarrow Q$, an initial state $q_0 \in Q$ and a set $F \subseteq Q$ of accepting states.
+For a \acf{nfa}, from a given state multiple states can be reached with the same input, so the transition function is  $\delta: Q \times \Sigma \rightarrow 2^Q$, where $2^Q$ denotes the power set of $Q$.
+
+We represent automata as graphs, where each state is a node and the transition function is represented by edges labeled with elements of $\Sigma$. The start state is marked with an incoming arrow and the accepting states are marked with double circles.
+An edge in this graph, henceforth also called transition, is denoted as $(q_1, a, q_2)$, where $q_1 \in Q$ is the origin state, $a \in \Sigma$ is the label and $q_2 \in Q$ is the target state of the edge.
+
+\section{Strongly Regular Grammars}\label{sec:background:srg}
+
+$\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$ of some grammar:
+
+\begin{align}
+	A \mathcal{R} B \Leftrightarrow (\exists \alpha, \beta \in V^* : A \xrightarrow{*} \alpha B \beta) \land (\exists \alpha, \beta \in V^* : B \xrightarrow{*} \alpha A \beta) 
+\end{align}
+
+Here $V$ is $\Sigma \cup N$, so the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. $A \xrightarrow{*} \alpha B \beta$ means, that there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, where each nonterminal in a class can be produced by each other nonterminal in the class. Those nonterminals are called mutually recursive.
+
+A grammar is strongly regular if the production rules in each such equivalence class are either all right-linear or left-linear.
+
+A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
+
+
 \section{Code Property Graph}
 The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \ac{cpg} out of source code of a set of different programming languages.
 
@@ -29,7 +63,7 @@ While the \ac{cpg} contains many different types of edges, the most relevant edg
 	System.out.println(s);
 \end{lstlisting}
 
-Consider the short code example in listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:]]
+Consider the short code example in listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:
 
 \begin{itemize}
 	\item \lstinline|Literal|, representing the string literal \lstinline{"xyz"}
@@ -42,19 +76,5 @@ In this example, the data flows from the \lstinline|Literal| node to the \lstinl
 The nodes connected by those egdes effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
 
 % TODO mention definition for DFG in CPG repo
-
-\section{Strongly Regular Grammars}\label{sec:background:srg}
-
-$\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$ of some grammar:
-
-\begin{align}
-	A \mathcal{R} B \Leftrightarrow (\exists \alpha, \beta \in V^* : A \xrightarrow{*} \alpha B \beta) \land (\exists \alpha, \beta \in V^* : B \xrightarrow{*} \alpha A \beta) 
-\end{align}
-
-Here $V$ is $\Sigma \cup N$, so the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. $A \xrightarrow{*} \alpha B \beta$ means, that there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, where each nonterminal in a class can be produced by each other nonterminal in the class. Those nonterminals are called mutually recursive.
-
-A grammar is strongly regular if the production rules in each such equivalence class are either all right-linear or left-linear.
-
-A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
 
 

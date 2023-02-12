@@ -5,7 +5,7 @@
 \section{General Approach}
 
 The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first create a \acf{cfg} from the \ac{dfg} in a process described in Section \ref{sec:grammarCreation}.
-The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an automaton using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton.
+The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an automaton using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton using the state elimination strategy.
 
 
 \tikzstyle{grammar} = [
@@ -104,7 +104,7 @@ In this case, we can add a \lstinline|TerminalProduction| with the \lstinline|Te
 
 \section{Regular Approximation}\label{sec:approximation}
 \subsection{Character Set Approximation}\label{sec:charsetApprox}
-To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we need to eliminate all cycles in our grammar that contain operation production s\cite{mohri_nederhof}.
+To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we need to eliminate all cycles in our grammar that contain operation productions \cite{mohri_nederhof}.
 
 First, we view the grammar as a graph in which each symbol of the grammar corresponds to one graph node and for each production there are edges from the nonterminal on the left hand side to all symbols on the right hand side. 
 For two nonterminals $A$ and $B$ there is an edge from the node corresponding to $A$ to the one corresponding to $B$ iff there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
@@ -192,15 +192,17 @@ For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b'
 \subsection{Mohri-Nederhof Approximation}\label{sec:mohriNederhofApprox}
 
 
-Mohri and Nederhof \cite{mohri_nederhof} describe an algorithm to transform a \ac{cfg} into a \ac{srg} as defined in Section \ref{sec:background:srg} that approximates the given \ac{cfg}.
+Mohri and Nederhof \cite{mohri_nederhof} describe an algorithm to transform a \ac{cfg} into a \ac{srg} that approximates the given \ac{cfg}.
+
+Recall from the definition of \acp{srg} in Section \ref{sec:background:srg}, that we can partition the nonterminals of a grammar into equivalence classes based on whether they are reachable from each other. Also recall, that a grammar is strongly regular, if for each such equivalence class, all recursive productions of nonterminals contained in it are either left-linear or right-linear.
 
 For determining if a production rule of a given equivalence class is right- or left-linear all nonterminals that are not part of the class can be considered as terminals. For example a production $A \rightarrow CX$ where $A$ and $C$ are nonterminals in the same equivalence class and $X$ is a nonterminal in another class is left linear because $X$ can be viewed as a terminal.
 
-To transform a \ac{cfg} into a \ac{srg}, we only need to transform the sets of mutually recursive nonterminals where not all productions are either left-linear or right-linear.
+To transform a \ac{cfg} into a \ac{srg}, we only need to transform the sets of mutually recursive nonterminals, where not all productions are either left-linear or right-linear.
 
 \subsubsection{Transformation}
 
-Mohri and Nederhof describe a more general transformation approach for productions with an arbitrary number of nonterminals on the left hand side \cite{mohri_nederhof}. Since all productions we use have either one or two nonterminals or exactly one terminal on the right hand side, we can reduce this more general approach to the following set of rules described by Christensen et al.\cite{brics}.
+Mohri and Nederhof describe a more general approach for transforming the required equivalence classes, that accounts for productions with an arbitrary number of nonterminals on the right hand side \cite{mohri_nederhof}. Since all productions we use have either one or two nonterminals or exactly one terminal on the right hand side, we can reduce this more general approach to the following set of rules described by Christensen et al.\cite{brics}.
 
 For each nonterminal $A$ in a given equivalence class $M$ add a new nonterminal $A'$.
 % TODO epsilon production wenn hotspot, bzw bei uns grammar start iwie erwähnen
@@ -430,7 +432,7 @@ Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:
 
 \subsubsection{Operation Productions}\label{opProduction}
 
-As described above, operation productions of form $C \rightarrow op(X)$ are treated like a normal production $C \rightarrow X$.
+As described above, for the Nederhof algorithm, operation productions of form $C \rightarrow op(X)$ are treated like a normal unary production $C \rightarrow X$.
 
 Each operation defines an automaton transformation that changes a given automaton.
 The new automaton accepts the language obtained by applying the operation to each word in the language of the input automaton.
@@ -440,23 +442,23 @@ The automaton transformation for $replace[old, new]$ traverses the automaton and
 To apply the effect of the different operations onto the created automaton, we first need to find the sub-automata affected by each operation.
 
 To obtain these sub-automata, we taint all nodes and edges if they are created in recursion calls originating from an operation production. 
-If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, to which the transformation of the corresponding operation can then be applied.
+If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can then be applied.
 
-Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here the production $A \rightarrow F$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two identical paths, since $A \rightarrow replace[f,x](F)$ is treated like a second $A \rightarrow F$ production, just that the resulting edges and adjacent states are tainted.
+Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here the production $A \rightarrow E$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two similar paths, since $A \rightarrow replace[f,x](F)$ is treated like a $A \rightarrow F$ production analogous to $A \rightarrow E$, just that the resulting edges and adjacent states are tainted.
 
 After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
 
 As mentioned above, for the $replace[f,x]$ operation this transformation consists of replacing all occurrences of $f$ on tainted edges with $x$, which gives us the automaton in Figure \ref{fig:operations:automaton2} for the given example.
 
-
-
 \begin{figure}[h]
 	\begin{minipage}[b]{.3\linewidth}
 		\begin{align*}
-			&A \rightarrow F\\
+			&A \rightarrow E\\
 			&A \rightarrow replace[f, x](F)\\
+			&E \rightarrow eE\\
+			&E \rightarrow e\\
 			&F \rightarrow fF\\
-			&F \rightarrow f\\
+			&F \rightarrow f
 		\end{align*}
 		\caption{Example grammar with operation production}
 		\label{fig:operations:grammar}
@@ -475,9 +477,9 @@ As mentioned above, for the $replace[f,x]$ operation this transformation consist
 			\path [-stealth, thick]
 			(q0) edge node[above] {$\epsilon$}   (q2)
 			(q0) edge [draw = red] node[above] {$\epsilon$}   (q3)
-			(q2) edge [loop right] node[right] {$f$}   (q2)
+			(q2) edge [loop right] node[right] {$e$}   (q2)
 			(q3) edge [loop left, draw = red] node[left] {$f$}   (q3)
-			(q2) edge node[above] {$f$}   (q1)
+			(q2) edge node[above] {$e$}   (q1)
 			(q3) edge [draw = red] node[above] {$f$}   (q1);
 		\end{tikzpicture}
 		\caption{Resulting automaton for the grammar in Figure \ref{fig:operations:grammar}}
@@ -497,13 +499,88 @@ As mentioned above, for the $replace[f,x]$ operation this transformation consist
 			\path [-stealth, thick]
 			(q0) edge node[above] {$\epsilon$}   (q2)
 			(q0) edge node[above] {$\epsilon$}   (q3)
-			(q2) edge [loop right] node[right] {$f$}   (q2)
+			(q2) edge [loop right] node[right] {$e$}   (q2)
 			(q3) edge [loop left] node[left] {$x$}   (q3)
-			(q2) edge node[above] {$f$}   (q1)
+			(q2) edge node[above] {$e$}   (q1)
 			(q3) edge node[above] {$x$}   (q1);
 		\end{tikzpicture}
 		\caption{Automaton in figure \ref{fig:operations:automaton1} after applying operation transformation}
 		\label{fig:operations:automaton2}
+	\end{minipage}
+\end{figure}
+
+For more complex operation transformations like a $reverse$ operation, the operation transformation also includes adding and removing states and edges of the automaton.
+
+Consider the automaton in Figure \ref{fig:reverse:automaton1}, where the colored parts are tainted with the $reverse$ operation.
+
+To apply the reverse operation we first duplicate the tainted subautomaton and create a new state for each contained state. Here $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states. The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
+Now we reverse the direction of all edges in the duplicated subautomaton.
+For example, after duplication there was the edge $(q_6, c, q_5)$ because the original automaton had an edge $(q_3,c,q_1)$. This edge is now reversed to give us the edge $(q_5, c, q_6)$ that is present in the final automaton.
+
+After reversing all edges, the subautomaton is connected back to the rest using new $\epsilon$ edges.
+Finally all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
+In the example automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
+
+\begin{figure}[h]
+	\begin{minipage}[b]{.2\linewidth}
+		\begin{align*}
+			&S \rightarrow A\\
+			&S \rightarrow reverse(B)\\
+			&A \rightarrow aA\\
+			&A \rightarrow c\\
+			&B \rightarrow bB\\
+			&B \rightarrow c
+		\end{align*}
+		\caption{Example grammar with operation production}
+		\label{fig:reverse:grammar}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.25\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial, initial where=above,
+			initial text = {}, fill = red!30] {$q_0$};
+			\node (q2) [state, below left = of q0] {$q_2$};
+			\node (q3) [state, below right = of q0, fill = red!30] {$q_3$};
+			\node (q1) [state, accepting, below left = of q3, fill = red!30] {$q_1$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$\epsilon$}   (q2)
+			(q0) edge [draw = red] node[above] {$\epsilon$}   (q3)
+			(q2) edge [loop right] node[right] {$a$}   (q2)
+			(q3) edge [loop left, draw = red] node[left] {$b$}   (q3)
+			(q2) edge node[above] {$c$}   (q1)
+			(q3) edge [draw = red] node[above] {$c$}   (q1);
+		\end{tikzpicture}
+		\caption{Resulting automaton for the grammar in figure \ref{fig:reverse:grammar}}
+		\label{fig:reverse:automaton1}
+	\end{minipage}
+	\hfill
+	\begin{minipage}[b]{.45\linewidth}
+		\begin{tikzpicture}[
+			every initial by arrow/.style = {
+				thick,-stealth
+			}]
+			\node (q0) [state, initial, initial where=above,
+			initial text = {}] {$q_0$};
+			\node (q2) [state, below left = of q0] {$q_2$};
+			\node (q5) [state, right = of q0] {$q_5$};
+			\node (q6) [state, below right = of q5] {$q_6$};
+			\node (q4) [state, below left = of q6] {$q_4$};
+			\node (q1) [state, accepting, below right = of q2] {$q_1$};
+			\path [-stealth, thick]
+			(q0) edge node[above] {$\epsilon$}   (q2)
+			(q2) edge [loop right] node[right] {$a$}   (q2)
+			(q2) edge node[above] {$c$}   (q1)
+			(q0) edge node[above] {$\epsilon$}   (q5)
+			(q5) edge node[above] {$c$}   (q6)
+			(q6) edge node[above] {$\epsilon$}   (q4)
+			(q6) edge [loop left] node[left] {$b$}   (q6)
+			(q4) edge node[below] {$\epsilon$}   (q1);
+		\end{tikzpicture}
+		\caption{Automaton in figure \ref{fig:reverse:automaton1} after applying operation transformation\\}
+		\label{fig:reverse:automaton2}
 	\end{minipage}
 \end{figure}
 
