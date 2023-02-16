@@ -30,8 +30,6 @@ Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tric
 
 As Christensen et al. mention, this expression is a good result, but by distinguishing the two calls to the \lstinline|bar| method, an even more precise expression could be obtained \cite{brics}. Due to the given properties of the \ac{cpg} creation, this is currently not an option for our implementation.
 
-
-
 \begin{figure}
 	\begin{tikzpicture}[
 		every initial by arrow/.style = {
@@ -111,7 +109,126 @@ public class Tricky{
 }
 \end{lstlisting}
 
+\subsubsection{Juliet}
+
+We also analyzed some of the test cases provided by the Juliet Java test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. The Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
+
+The test cases each target one type of flaw corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All test cases we chose, target SQL-Injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
+
+The test cases in the Juliet test suite build an SQL query \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string with unknown value.
+
+The cases differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library.
+
+For all tested cases, we obtain the regular expression \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
+
+While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a security risk, because an injection string can be inserted as a value for \Verb@.*@.
+
 \subsection{Performance}
+
+In the following section all mentioned averages are truncated averages, which means that before calculating the average, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This is done to eliminate the effect of statistical outliers, which are common in software benchmarks. Such outliers are e.g. caused by unpredictable CPU scheduling and optimization. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
+
+\subsubsection{Tricky}
+
+Consider the Figures \ref{fig:eval:plot:tricky} and \ref{fig:eval:plot:trickyDFA}. 
+The plots show the durations of each step in the process from \ac{cpg} to regular expression. 
+In the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
+
+For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
+
+\subsubsection{Juliet}
+
+We analyzed the execution time of each hotspot of all 2224 test cases in the Juliet test suite targeting SQL Injection vulnerabilities.
+
+Figure \ref{fig:eval:plot:juliet} shows the averaged execution times of each step, again trimmed by 20\%.
+We can see, that the percentage of the total time spent on regex creation is lower compared to the plot for the Tricky example in Figure \ref{fig:eval:plot:tricky}, even without the intermediary \ac{dfa} step. This is due to the fact that the resulting automata for the Juliet test cases are very small, ranging from 2 to 4 states, compared to the 28 nodes of the Tricky \ac{nfa}.
+
+Also note the difference in the scale of the x-axis of factor 10, which shows that the Juliet test cases are significantly faster, again due to their comparatively lower complexity.
+
+\begin{figure}[h]
+	\pgfplotsset{stackedBar/.style={
+			title=Tricky,
+			xbar stacked,
+			width=15cm,
+			axis y line*= none, axis x line*= bottom,
+			xmajorgrids = true,
+			xmin=0,xmax=5000,
+			ytick = \empty,
+			yticklabels = {},
+			tick align = outside, xtick pos = left,
+			bar width=6mm, y=8mm,
+			enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(1004.1666666666666, 4)};
+			\addplot[fill=gray!40] coordinates {(469.55, 3)};
+			\addplot[fill=purple!40] coordinates {(208.81666666666666, 2)};
+			\addplot[fill=orange!40] coordinates {(609.7, 1)};
+			\addplot[fill=blue!40] coordinates {(2127.1666666666665, 0)};
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of Tricky example in $\mu s$}
+	\label{fig:eval:plot:tricky}
+\end{figure}
+
+\begin{figure}[h!]
+	\pgfplotsset{stackedBar/.style={
+			title=Tricky with DFA,
+			xbar stacked,
+			width=15cm,
+			axis y line*= none, axis x line*= bottom,
+			xmajorgrids = true,
+			xmin=0,xmax=5000,
+			ytick = \empty,
+			yticklabels = {},
+			tick align = outside, xtick pos = left,
+			bar width=6mm, y=8mm,
+			enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(944.05, 5)};
+			\addplot[fill=gray!40] coordinates {(434.3333333333333, 4)};
+			\addplot[fill=purple!40] coordinates {(194.41666666666666, 3)};
+			\addplot[fill=orange!40] coordinates {(592.6666666666666, 2)};
+			\addplot[fill=green!40] coordinates {(300.8833333333333, 1)};
+			\addplot[fill=blue!40] coordinates {(326.76666666666665, 0)};
+				\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,DFA creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of Tricky example with \ac{dfa} creation in $\mu s$}
+	\label{fig:eval:plot:trickyDFA}
+\end{figure}
+
+\begin{figure}
+	\pgfplotsset{stackedBar/.style={
+			title=Juliet,
+			xbar stacked,
+			width=15cm,
+			axis y line*= none, axis x line*= bottom,
+			xmajorgrids = true,
+			xmin=0,xmax=500,
+			ytick=\empty,
+			yticklabels = {},
+			tick align = outside, xtick pos = left,
+			bar width=6mm, y=8mm,
+			enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(148.74632967849843, 4)};
+			\addplot[fill=gray!40] coordinates {(58.49117264448987, 3)};
+			\addplot[fill=purple!40] coordinates {(14.738710276900205, 2)};
+			\addplot[fill=orange!40] coordinates {(47.58520721055566, 1)};
+			\addplot[fill=blue!40] coordinates {(63.04980486898346, 0)};
+				\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of Juliet test cases in $\mu s$}
+	\label{fig:eval:plot:juliet}
+\end{figure}
+
 
 \section{Discussion and Future work}
 
@@ -149,7 +266,17 @@ if(s|\textcolor{red}{$^2$}|.isEmpty()){ |\label{lst:assertions:condition}|
 System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
 \end{lstlisting}
 
-\section{Automata Centric Approach}
+\subsection{Other Features}
+
+Currently the \ac{cpg} does not contain \ac{dfg} edges to differentiate which field of an array is accessed in an array subscription expression like \lstinline|myArray[5]|.
+
+Therefore, we do not further analyze values stored in arrays but rather just insert a regular expression generally describing the type stored in the array.
+
+We mostly focused on simple strings, but in general everything we described can be applied to string builders. For example, during grammar creation, a \lstinline|ConcatProduction| is not only created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string.
+
+As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach.
+
+\subsection{Automata Centric Approach}
 
 We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
 However, representing the information as \acp{dfa} instead of converting the automata to regular expressions has some advantages due to theoretical properties of \acp{dfa}.
@@ -157,10 +284,10 @@ However, representing the information as \acp{dfa} instead of converting the aut
 Regular expression objects in most programming languages, for example Kotlin's \lstinline|Regex| object, determine, whether a given string matches the expression. With a sufficiently advanced automaton implementation more advanced checks can be made.
 After analyzing a given hotspot and obtaining an automaton $M$, instead of just matching a given string as a query, the input can be a regular expression. This regular expression can then be turned into another \ac{dfa} $N$.
 Since \acp{dfa} are closed under intersection and complement, we can build the \ac{dfa} $R = M \cap \overline{N}$, which accepts words that are in the language of the analysis result, but not in the language of the query expression.
-Now we can check, whether $R$'s language is empty to determine, whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a string from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
+Now we can check, whether $R$'s language is empty to determine, whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a word from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
 Additionally, we can check whether $M$ and $N$ are equivalent.
 
-Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, increasing the capabilities of these automata can be the focus of future work.
+Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned advanced query possibilities.
 \begin{comment}
 \begin{itemize}
 \item How did you test/evaluate your PoC?

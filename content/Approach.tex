@@ -64,7 +64,6 @@ Our Grammar contains the following five types of productions:
 	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$ for concatenation of two nodes
 	\item \lstinline|TerminalProduction|: $X \rightarrow \texttt{<terminal>}$ for literal string values and other terminal symbols
 	\item \lstinline|UnaryOpProduction|: $X \rightarrow op(Y)$ for unary operations on strings
-	\item \lstinline|BinaryOpProduction|: $X \rightarrow op(Y, Z)$ for binary operations on strings
 \end{itemize}
 
 Here, \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and "$op$" is a placeholder for a string operation that is applied to some arguments.
@@ -85,7 +84,7 @@ Consider the code example in Listing \ref{lst:grammar_example} for the following
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
 For example, for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string "abc". \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular lanuage \lstinline|.*|, matching all strings.
 
-\lstinline|UnaryOpProduction|s and \lstinline|BinaryOpProductions| represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create a \lstinline|Trim| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. 
+\lstinline|UnaryOpProduction|s represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create a \lstinline|Trim| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. 
 All operation objects like \lstinline|Trim| also contain information about possible arguments and implement a character set transformation and an automaton transformation. These transformations describe the effect of the operation on the set of characters making up the words the operation is applied on or automata accepting those words respectively.
 Examples and how these transformations are used for the approximation are described in Section \ref{sec:approximation}.
 This language agnostic representation of string operation allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| operation object. For all further steps it is not relevant whether this repeat operation is created from the mentioned Python operator \lstinline[language=Python]|s * n| or from the corresponding Java function \lstinline|s.repeat(n)|. 
@@ -219,7 +218,6 @@ Replace all productions of $A$ with the following new productions, where $B$ and
 	& A \rightarrow B\ C && \rightsquigarrow \quad A \rightarrow B,\ \     & &B' \rightarrow C,\ &&C' \rightarrow A'\\
 	& A \rightarrow \texttt{terminal} && \rightsquigarrow \quad A \rightarrow R\ A',\ \ & &R \rightarrow \texttt{terminal}\ &&\\
 	& A \rightarrow op(X) && \rightsquigarrow  \quad A \rightarrow R\ A',\ \ & &R \rightarrow op(X)\ &&\\
-	& A \rightarrow op(X,Y) && \rightsquigarrow  \quad A \rightarrow R\ A',\ \ & &R \rightarrow op(X,Y)\ &&\\
 \end{alignat*}
 
 Since all newly created productions are right-linear, after applying this transformation to all components where it is required, all components in the grammar either contain only left- or only right-linear productions. Therefore the resulting grammar is strongly regular.
@@ -249,7 +247,7 @@ The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac
 The \texttt{create\_state} function used in the pseudo code just creates a new state object which can then be added to the automaton.
 
 Note that for the general algorithm an operation production of form $A \rightarrow op(X)$ is treated like an unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines \ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production initially contained in a cycle, the cycle is broken up by the character set approximation described in Section \ref{sec:charsetApprox}.
-Therefore, e.g. an operation production $C \rightarrow op(DX_1)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
+Therefore, e.g. an operation production $C \rightarrow op(D)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
 How the effects of the operation productions are resolved is described in the following section. 
 
 The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar starting at $\alpha$ between those two states.
