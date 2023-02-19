@@ -1,19 +1,41 @@
 \chapter{Introduction}
 \label{chapter:introduction}
-Your introduction goes here
-\begin{itemize}
-\item Generic description of the broad field of research
-\item Current state of research
-\item What's the gap that you're trying to fill?
-\item Short motivation
-\item Summary of the most important results
-\item Your contribution
-\item Structure of the thesis
-\end{itemize}
 
-1-2.5 pages
+\begin{comment}
+	Your introduction goes here
+	\begin{itemize}
+		\item Generic description of the broad field of research
+		\item Current state of research
+		\item What's the gap that you're trying to fill?
+		\item Short motivation
+		\item Summary of the most important results
+		\item Your contribution
+		\item Structure of the thesis
+	\end{itemize}
+	
+	1-2.5 pages
+	
+	This text is not too detailed. Start quite high-level, then narrow down until
+	you reach your topic. After the introduction, the reader must want to read the
+	rest of your thesis and understand the relevance. However, it doesn't have to
+	be super technical.
+\end{comment}
 
-This text is not too detailed. Start quite high-level, then narrow down until
-you reach your topic. After the introduction, the reader must want to read the
-rest of your thesis and understand the relevance. However, it doesn't have to
-be super technical.
+\section{Motivation}
+
+The increasing reliance on software applications in various aspects of modern life has led to a growing concern for the security of these applications. Among the many security threats that can affect software, injection vulnerabilities are among the most dangerous and prevalent. According to the Open Web Application Security Project (OWASP), injection attacks, which include SQL injection, LDAP injection, and command injection, are consistently listed as one of the top ten web application security risks\footnote{https://owasp.org/Top10}.
+
+Injection vulnerabilities occur when an attacker is able to insert malicious code or input into an application, often through input fields that accept user input such as search boxes or login forms. This can result in the attacker gaining unauthorized access to sensitive data, executing arbitrary code, or even taking control of the entire system.
+
+To prevent injection vulnerabilities, developers can use a variety of tools and techniques, including static analysis tools for string values. These tools analyze the source code of an application to identify potential vulnerabilities, including injection vulnerabilities. Static analysis tools are particularly useful because they can detect vulnerabilities that may not be apparent during testing or manual code review.
+
+In order to detect injection vulnerabilities, such tools can try to analyze the possible values a string that is passed as a query to e.g. a database can take on.
+
+From these inferred properties, a tool can then assess, whether the analyzed program contains any potential injection vulnerabilities and warn the programmer.
+
+\section{Contribution}
+
+In this thesis, we extend a \acf{cpg} implementation, which is used by the static analysis tool Codyze\footnote{https://www.codyze.io/}, to increase its capabilities in analyzing string values. We adapt a theoretical approach\cite{brics}, which creates regular languages describing the values of a string, to the present \ac{cpg} implementation. We combine this approach with other techniques\cite{nederhof}\cite{delgado} to improve the results. We also provide a working proof of concept implementation covering a subset of the Java standard library.
+
+After providing some theoretical background in Chapter \ref{chapter:Background}, we describe the different steps of our approach in Chapter \ref{chapter:Approach}.
+In Chapter \ref{chapter:Evaluation}, we then evaluate the results and benchmark our implementation. We also highlight some limitations of our approach and include ideas for future continuation and improvement of the presented design.

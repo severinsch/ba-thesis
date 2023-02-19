@@ -1,9 +1,15 @@
 \chapter{Evaluation and Discussion}
 \label{chapter:Evaluation}
 
+We first evaluate our approach regarding the obtained results and its performance and then discuss its limitations and potential future work to improve and extend our current implementation.
+
 \section{Evaluation and Benchmarking}
 
-\subsection{Correctness}
+In this section, we first analyze the quality of the results of our approach, e.g. concerning the length of the regular expression and whether it describes the correct language in \ref{sec:eval:correctness}. Afterwards, we measure execution times of the different steps using different inputs and variations of our approach in \ref{sec:eval:peformance}
+
+\subsection{Correctness}\label{sec:eval:correctness}
+
+We analyze the resulting regular expressions of a synthetic example from Christensen et al. \cite{brics} and the SQL Injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}.
 
 \subsubsection{Tricky}
 
@@ -14,8 +20,8 @@ After the regular approximation the resulting grammar contains 51 nonterminals a
 The difference to the corresponding grammar Christensen et al. created stems from differences in the definition and implementation of the data flow graph.
 
 
-The \ac{nfa} created from the grammar contains 28 states and 40 transitions, of which 27 are $\epsilon$ transitions, and is to large to display in this thesis.
-The \acp{nfa} created using Nederhofs algorithm in general often have unnecessary states and transitions, like chains of states only connected with $\epsilon$ transitions.
+The \ac{nfa} created from the grammar contains 28 states and 40 transitions, of which 27 are $\epsilon$ transitions, and is too large to usefully be displayed in this thesis.
+The \acp{nfa} created using Nederhof's algorithm in general often have unnecessary states and transitions, like chains of states only connected with $\epsilon$ transitions.
 With a length of 622 characters, the regular expression we obtain is more complex than necessary. However it accepts the correct language described with the expression \Verb|\(*<int>([+*]<int>\))*| by Christensen et al. \cite{brics}, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@. Note that Christensen et al. only create automata and not regular expressions, so this expression is just to describe their created automaton. How their automaton compares to ours is unclear, as they only share this description of the language.
 
 Also note that our implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 120 characters compared to escaping using a backslash.
@@ -26,7 +32,7 @@ Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an e
 (((\((\()*(<int>)|<int>)(\*|\+))(((<int>)\))(\*|\+))*((<int>)\)))|(\((\()*(<int>)|<int>)
 \end{Verbatim}
 
-Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which is transformed to the regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@.
+Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which is transformed to the even shorter regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@.
 
 As Christensen et al. mention, this expression is a good result, but by distinguishing the two calls to the \lstinline|bar| method, an even more precise expression could be obtained \cite{brics}. Due to the given properties of the \ac{cpg} creation, this is currently not an option for our implementation.
 
@@ -111,21 +117,23 @@ public class Tricky{
 
 \subsubsection{Juliet}
 
-We also analyzed some of the test cases provided by the Juliet Java test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. The Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
+We also analyzed some of the test cases provided by the Juliet Java test suite. The Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
 
-The test cases each target one type of flaw corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All test cases we chose, target SQL-Injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
+The test cases each target one type of flaw corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All test cases we chose target SQL-Injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
 
-The test cases in the Juliet test suite build an SQL query \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string with unknown value.
+The vulnerable test cases in the Juliet test suite build an SQL query similar to \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string with unknown value.
 
 The cases differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library.
 
-For all tested cases, we obtain the regular expression \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
+For the case described above, we obtain the regular expression \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
 
-While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a security risk, because an injection string can be inserted as a value for \Verb@.*@.
+While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a severe security risk, because any injection string could be inserted as a value for \lstinline|data|, signified by the wildcard pattern \Verb@.*@.
 
-\subsection{Performance}
+\subsection{Performance}\label{sec:eval:peformance}
 
-In the following section all mentioned averages are truncated averages, which means that before calculating the average, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This is done to eliminate the effect of statistical outliers, which are common in software benchmarks. Such outliers are e.g. caused by unpredictable CPU scheduling and optimization. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
+Further, we measured the execution time of the different steps in our analysis approach. As in the previous section we considered the Tricky example and the test cases of the Juliet test suite. 
+
+In the following, all mentioned averages are truncated averages, which means that before calculating the average, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This is done to eliminate the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling or caching. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
 
 \subsubsection{Tricky}
 
@@ -134,15 +142,6 @@ The plots show the durations of each step in the process from \ac{cpg} to regula
 In the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
 
 For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
-
-\subsubsection{Juliet}
-
-We analyzed the execution time of each hotspot of all 2224 test cases in the Juliet test suite targeting SQL Injection vulnerabilities.
-
-Figure \ref{fig:eval:plot:juliet} shows the averaged execution times of each step, again trimmed by 20\%.
-We can see, that the percentage of the total time spent on regex creation is lower compared to the plot for the Tricky example in Figure \ref{fig:eval:plot:tricky}, even without the intermediary \ac{dfa} step. This is due to the fact that the resulting automata for the Juliet test cases are very small, ranging from 2 to 4 states, compared to the 28 nodes of the Tricky \ac{nfa}.
-
-Also note the difference in the scale of the x-axis of factor 10, which shows that the Juliet test cases are significantly faster, again due to their comparatively lower complexity.
 
 \begin{figure}[h]
 	\pgfplotsset{stackedBar/.style={
@@ -194,12 +193,22 @@ Also note the difference in the scale of the x-axis of factor 10, which shows th
 			\addplot[fill=orange!40] coordinates {(592.6666666666666, 2)};
 			\addplot[fill=green!40] coordinates {(300.8833333333333, 1)};
 			\addplot[fill=blue!40] coordinates {(326.76666666666665, 0)};
-				\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,DFA creation,Regex creation}
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,DFA creation,Regex creation}
 		\end{axis}
 	\end{tikzpicture}
 	\caption{Durations of Tricky example with \ac{dfa} creation in $\mu s$}
 	\label{fig:eval:plot:trickyDFA}
 \end{figure}
+
+\subsubsection{Juliet}
+
+We analyzed the execution time of each database related hotspot of all 2224 test cases in the Juliet test suite targeting SQL Injection vulnerabilities.
+
+Figure \ref{fig:eval:plot:juliet} shows the averaged execution times of each step, again trimmed by 20\%.
+We can see, that the percentage of the total time spent on regex creation is lower compared to the plot for the Tricky example in Figure \ref{fig:eval:plot:tricky}, even without the intermediary \ac{dfa} step. This is due to the fact that the resulting automata for the Juliet test cases are very small, ranging from 2 to 4 states, compared to the 28 nodes of the Tricky \ac{nfa}.
+
+Also note the difference in the scale of the x-axis of factor 10, which shows that the Juliet test cases are significantly faster, again due to their comparatively lower complexity.
+
 
 \begin{figure}
 	\pgfplotsset{stackedBar/.style={
@@ -232,6 +241,8 @@ Also note the difference in the scale of the x-axis of factor 10, which shows th
 
 \section{Discussion and Future work}
 
+We discuss several limitations of our implementation and present potential approaches, how future work can mitigate these limitations and extend our implementation.
+
 \subsection{Assertions}
 
 Our implementation currently does not try to evaluate assertions like \lstinline|s.isEmpty()| due to limitations in the creation of the \ac{cpg} we use.
@@ -246,13 +257,13 @@ To resolve such an assertion production $A \rightarrow assertion(B)$ we could im
 In Listing \ref{lst:assertions}, we could always infer that \lstinline|s|$^3$ is empty, which is clear from the code.
 
 For this example we currently get the regular expression \Verb@(<val>empty)|(<val>)@ as a result. 
-Consider \Verb@<val>@ to be \lstinline[mathescape]@abc|$\epsilon$@, which gives us \lstinline[mathescape]@((abc|$\epsilon$)empty)|(abc|$\epsilon$)@ as our current result.
+Consider \Verb@<val>@ to be \lstinline[mathescape]@abc|$\epsilon$@, which gives us \lstinline[mathescape]@((abc|$\epsilon$)empty)|(abc|$\epsilon$)@.
 Here the first part \lstinline[mathescape]@((abc|$\epsilon$)empty)@ corresponds to the value of \lstinline|s|$^4$, which is a possible value of the analyzed \lstinline|s|$^5$ and the second part \lstinline[mathescape]@(abc|$\epsilon$)@ to the value of \lstinline|s|$^1$, which is the result if the condition evaluates to false.
 
 With the mentioned additional \ac{dfg} edges and the described logic, we could sharpen this result.
 As mentioned above, the value of \lstinline|s|$^3$ would be $\epsilon$ due to the \lstinline|isEmpty| assertion transformation and therefore \lstinline|s|$^4$ would be a concatenation of $\epsilon$ and the string \lstinline|"empty"|, so just \lstinline|empty|.
 
-This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which is more precise.
+This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which is more precise, as for example the unobtainable \Verb@abcempty@ is not part of the language of this regular expression.
 
 Similar transformations could also be defined for more complex assertions like \lstinline|s.length() == 1|.
 
@@ -270,9 +281,9 @@ System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
 
 Currently the \ac{cpg} does not contain \ac{dfg} edges to differentiate which field of an array is accessed in an array subscription expression like \lstinline|myArray[5]|.
 
-Therefore, we do not further analyze values stored in arrays but rather just insert a regular expression generally describing the type stored in the array.
+Therefore, we currently do not further analyze values stored in arrays but rather just insert a regular expression generally describing the type stored in the array.
 
-We mostly focused on simple strings, but in general everything we described can be applied to string builders. For example, during grammar creation, a \lstinline|ConcatProduction| is not only created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string.
+We mostly focused on simple strings, but in general everything we described can be applied to string builders. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string.
 
 As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach.
 
@@ -281,11 +292,11 @@ As this is just a proof of concept, we also implemented only a few operations on
 We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
 However, representing the information as \acp{dfa} instead of converting the automata to regular expressions has some advantages due to theoretical properties of \acp{dfa}.
 
-Regular expression objects in most programming languages, for example Kotlin's \lstinline|Regex| object, determine, whether a given string matches the expression. With a sufficiently advanced automaton implementation more advanced checks can be made.
+Regular expression objects in most programming languages, for example Kotlin's \lstinline|Regex| object, can determine, whether a given string matches the expression. With a sufficiently advanced automaton implementation more advanced checks can be performed.
 After analyzing a given hotspot and obtaining an automaton $M$, instead of just matching a given string as a query, the input can be a regular expression. This regular expression can then be turned into another \ac{dfa} $N$.
 Since \acp{dfa} are closed under intersection and complement, we can build the \ac{dfa} $R = M \cap \overline{N}$, which accepts words that are in the language of the analysis result, but not in the language of the query expression.
 Now we can check, whether $R$'s language is empty to determine, whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a word from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
-Additionally, we can check whether $M$ and $N$ are equivalent.
+Additionally, we can check whether $M$ and $N$ are equivalent to determine, whether the query expression matches the computed result.
 
 Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned advanced query possibilities.
 \begin{comment}

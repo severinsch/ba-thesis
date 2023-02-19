@@ -5,7 +5,7 @@
 \section{General Approach}
 
 The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first create a \acf{cfg} from the \ac{dfg} in a process described in Section \ref{sec:grammarCreation}.
-The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an automaton using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton using the state elimination strategy.
+The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an automaton using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton using the state elimination strategy. Figure \ref{fig:approach} visualizes this process and the different steps from a graph to different types of formal grammars to a regular expression.
 
 
 \tikzstyle{grammar} = [
@@ -18,13 +18,25 @@ The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set
 	minimum size=2cm,
 	thick
 	]
-\tikzstyle{graph} = [
+\tikzstyle{automaton} = [
 	circle, 
+	draw, 
+	fill=blue!20, 
+	text width=5em, 
+	text centered,
+	minimum size=2cm,
+	thick
+]
+\tikzstyle{graph} = [
+	ellipse, 
 	draw, 
 	fill=orange!20, 
 	text width=5em, 
 	text centered,
-	minimum size=2cm,
+	minimum height=1.5cm,
+	minimum width=1cm,
+	text width=1.5cm,
+	align=center,
 	thick
 	]
 \tikzstyle{result} = [
@@ -39,31 +51,36 @@ The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set
 \tikzstyle{line} = [draw, -latex', very thick]
 \begin{figure}[H]
 	\centering
-\begin{tikzpicture}[node distance=1.5cm, auto]
+\begin{tikzpicture}[node distance=2cm and 2.5cm, auto]
 	    \node [graph] (DFG) {\ac{dfg}};
-	    \node [grammar, right=of DFG] (CFG) {\ac{cfg}};
-	    \node [grammar, right=of CFG, xshift=15mm] (REG) {\ac{srg}};
-	    \node [result, right=of REG] (regex) {regular expression};
+	    \node [grammar, right=of DFG] (CFG) {\ac{cfg}};	    
+	    \node [automaton, below= of CFG] (nfa) {\ac{nfa}};
+	    \node [result, left=of nfa] (regex) {regular expression};
+ 	    \node [grammar, right=of nfa, xshift=1.5cm] (REG) {\ac{srg}};
 	    
-	    \path [line] (DFG) -> (CFG);
-	    \path [line] (CFG) -> node [midway] {approximation} (REG);
-	    \path [line] (REG) -> (regex);
+	    \path [line] (DFG) -> node[above, align=center] {grammar\\creation} (CFG);
+	    \path [line] (CFG) -| coordinate (midpoint) (REG);
+	    \path [line] (CFG) -> node [above, midway] {charset approximation} (midpoint);
+ 	    \path [line] (midpoint) -> node [left, midway, align=center] {Mohri-Nederhof\\approximation} (REG);
+	    \path [line] (REG) -> node[above, align=center] {Nederhof's\\algorithm} (nfa);
+	    \path [line] (nfa) -> node[above, align=center] {state\\elimination} (regex);
 \end{tikzpicture}
 \caption{The general approach for obtaining regular expressions}
-\end{figure}
 \label{fig:approach}
+\end{figure}
+
 
 \section{Grammar Creation}\label{sec:grammarCreation}
 To create the grammar for a given \ac{cpg} node, we traverse the \ac{dfg} backwards, starting at the given node. 
 % The starting node can be one of the hotspot nodes collected by the aforementioned \lstinline|Pass|, but in general the grammar creation is independent of the hotspot collection.
 For each visited node, we add a \lstinline|Nonterminal| and the fitting productions to our grammar. 
 
-Our Grammar contains the following five types of productions:
+Our Grammar contains the following types of productions:
 \begin{itemize}
 	\item \lstinline|UnitProduction|:  $X \rightarrow Y$ for references between nodes
 	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$ for concatenation of two nodes
 	\item \lstinline|TerminalProduction|: $X \rightarrow \texttt{<terminal>}$ for literal string values and other terminal symbols
-	\item \lstinline|UnaryOpProduction|: $X \rightarrow op(Y)$ for unary operations on strings
+	\item \lstinline|OperationProduction|: $X \rightarrow op(Y)$ for operations on strings
 \end{itemize}
 
 Here, \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and "$op$" is a placeholder for a string operation that is applied to some arguments.
@@ -84,7 +101,7 @@ Consider the code example in Listing \ref{lst:grammar_example} for the following
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
 For example, for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string "abc". \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular lanuage \lstinline|.*|, matching all strings.
 
-\lstinline|UnaryOpProduction|s represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create a \lstinline|Trim| object representing this operation and the \lstinline|UnaryOpProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. 
+\lstinline|OperationProduction|s represent function calls or other operators. The \ac{cpg} for \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call of the library function \lstinline|trim|. We then create a \lstinline|Trim| object representing this operation and the \lstinline|OperationProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. 
 All operation objects like \lstinline|Trim| also contain information about possible arguments and implement a character set transformation and an automaton transformation. These transformations describe the effect of the operation on the set of characters making up the words the operation is applied on or automata accepting those words respectively.
 Examples and how these transformations are used for the approximation are described in Section \ref{sec:approximation}.
 This language agnostic representation of string operation allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| operation object. For all further steps it is not relevant whether this repeat operation is created from the mentioned Python operator \lstinline[language=Python]|s * n| or from the corresponding Java function \lstinline|s.repeat(n)|. 
@@ -447,6 +464,10 @@ Consider the grammar in Figure \ref{fig:operations:grammar} and the correspondin
 After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
 
 As mentioned above, for the $replace[f,x]$ operation this transformation consists of replacing all occurrences of $f$ on tainted edges with $x$, which gives us the automaton in Figure \ref{fig:operations:automaton2} for the given example.
+
+For regular expressions as edge labels the replace operations is more complex.
+
+For example \Verb@.*@, which is created when we encounter an unknown value like user input, matches all strings, and therefore also strings containing $f$. After applying the $reverse[f,x]$ operation to these strings, they can never contain an $f$, so therefore the edge label should match all strings that contain no $f$. This can be realized using a negative character class, so \Verb@.*@ is transformed to \Verb@[^f]@ by the $reverse[f,x]$ operation. Similarly, existing character classes need to be transformed, for example \Verb@[abf]@ to \Verb@[abx]@ and \Verb@[^ab]@ to \Verb@[^abf]@.
 
 \begin{figure}[h]
 	\begin{minipage}[b]{.3\linewidth}

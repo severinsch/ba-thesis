@@ -1,6 +1,23 @@
 \chapter{Problem Description}
 \label{chapter:ProblemDescription}
 
+The \ac{cpg} implementation we extend currently has no means of providing information about the structure and contents of strings variables that go beyond propagating literals if they are not changed.
+
+Describing such strings is not trivial, as often at least part of a given string stems from an unknown source, for example runtime user input.
+
+We solve this issue by describing a given string with a regular language, which conservatively approximates the values it can take.
+This means, that for a string $s$, the regular language we obtain to describe $s$, always contains all possible values $s$ can have.
+For the creation of these languages, we have to account for string concatenation and the effects of operations on strings like a \lstinline|replace| function.
+
+To make the obtained information usable for further analysis, we need to create a regular expression representing the created language. One can then check whether the analyzed string variable can take some value, by testing, whether this value matches the regular expression.
+
+While details on how the obtained information is analyzed further are not in the scope of this thesis, providing more information about strings can be useful for detecting string based vulnerabilities like injections.
+
+For example, consider a string variable, that is used as an SQL query and is determined to be described by the regular expression \Verb@DELETE \* FROM myTable WHERE id='.*'@.
+This information can be used to issue a warning during a static analysis, because the analyzed program allows for an arbitrary unchecked string to be inserted into the SQL query, which is a severe security issue.
+
+\begin{comment}
+	
 The introduction is a bit like a teaser. Here, you dig more into details, also
 technical ones. After this chapter, the reader must understand why you do this
 work, why it's important, what makes it difficult and what you want to achieve.
@@ -13,3 +30,5 @@ work, why it's important, what makes it difficult and what you want to achieve.
 \end{itemize}
 
 Probably 1-3 pages
+
+\end{comment}
