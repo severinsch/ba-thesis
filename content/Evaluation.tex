@@ -87,7 +87,7 @@ As Christensen et al. mention, this expression is a good result, but by distingu
 \end{figure}
 
 
-\begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small]
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small\ttfamily]
 public class Tricky{
 	String bar(int n, int k, String op) {
 		if (k==0) {
@@ -128,6 +128,38 @@ The cases differ in the data flow from the source of the \lstinline|data| string
 For the case described above, we obtain the regular expression \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
 
 While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a severe security risk, because any injection string could be inserted as a value for \lstinline|data|, signified by the wildcard pattern \Verb@.*@.
+
+\subsubsection{SQL query sanitization}
+
+Since the Tricky example is artificially complex and the Juliet test cases have comparably low complexity, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to escape an SQL input.
+
+Note that the given code does not compile as \lstinline|Connection| is an interface and cannot be instantiated, but as this is not relevant for our analysis we ignore it for the sake of brevity.
+
+Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'-]*'))@ as a result. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
+
+The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ inserted for \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the risk compared to unfiltered input.
+
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization code example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
+	import java.sql.*;
+	public class DatabaseSanitization{
+		public static void main(String[] args) throws SQLException {
+			String input = args[1];
+			
+			String param = (args[2] == "id") ? "id" : "name";
+			String sanitized = sanitize(input);
+			
+			Statement stmnt = (new Connection()).createStatement();
+			stmnt.executeQuery(
+			"DELETE * FROM users WHERE " + 
+			param + " = \'" + sanitized + "\'"
+			);
+		}
+		
+		public static String sanitize(String input){
+			return input.replace('\'', ' ').replace('-', ' ');
+		}
+	}
+\end{lstlisting}
 
 \subsection{Performance}\label{sec:eval:peformance}
 
@@ -238,6 +270,39 @@ Also note the difference in the scale of the x-axis of factor 10, which shows th
 	\label{fig:eval:plot:juliet}
 \end{figure}
 
+\subsubsection{SQL query sanitization}
+
+Figure \ref{fig:eval:plot:sqlSani} shows the execution time of analyzing the SQL query sanitization example from the previous section. Similar to the Tricky example, the plot shows the average of 100 measurements trimmed by 20\%. Again, note the different scale of the x axis compared to the previous examples. The difference compared to the other plots is explained with the different complexity of the analyzed code. Since the SQL query sanitization example is considerably less complex than the Tricky example, naturally the analysis execution time is lower. Similarly, for the Juliet examples smaller grammars and consequently smaller automata are created, and therefore the analysis is faster.
+
+Note that the relative execution times of the different steps are fairly consistent among the different examples.
+
+\begin{figure}
+	\pgfplotsset{stackedBar/.style={
+		title=SQL query sanitization,
+		xbar stacked,
+		width=15cm,
+		axis y line*= none, axis x line*= bottom,
+		xmajorgrids = true,
+		xmin=0,xmax=1000,
+		ytick=\empty,
+		yticklabels = {},
+		tick align = outside, xtick pos = left,
+		bar width=6mm, y=8mm,
+		enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(466.1666666666667, 4)};
+			\addplot[fill=gray!40] coordinates {(168.28333333333333, 3)};
+			\addplot[fill=purple!40] coordinates {(23.783333333333335, 2)};
+			\addplot[fill=orange!40] coordinates {(166.75, 1)};
+			\addplot[fill=blue!40] coordinates {(82.81666666666666, 0)};
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton 	creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of SQL query sanitization test case in $\mu s$}
+	\label{fig:eval:plot:sqlSani}
+\end{figure}
 
 \section{Discussion and Future work}
 
