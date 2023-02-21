@@ -31,6 +31,22 @@ For a \acf{nfa}, from a given state multiple states can be reached with the same
 We represent automata as graphs, where each state is a node and the transition function is represented by edges labeled with elements of $\Sigma$. The start state is marked with an incoming arrow and the accepting states are marked with double circles.
 An edge in this graph, henceforth also called transition, is denoted as $(q_1, a, q_2)$, where $q_1 \in Q$ is the origin state, $a \in \Sigma$ is the label and $q_2 \in Q$ is the target state of the edge.
 
+\subsection{Regular Expressions}
+
+We use a regular expression syntax with the following metacharacters from the Java regular expression flavor:
+
+\begin{itemize}
+	\item \Verb@*@: Kleene star. Matches the previous character zero or more times.
+	\item \Verb@.@: Wildcard. Matches any character.
+	\item \Verb@?@: Option. Matches the previous character zero or one time.
+	\item \Verb@|@: Choice. Matches either the previous or the following expression.
+	\item \Verb@[abc]@: Character class. Matches any of the contained characters (here \Verb@a@, \Verb@b@ and \Verb@c@).
+	\item \Verb@[^abc]@: Negative character class. Matches any character not contained (here anything except \Verb@a@, \Verb@b@ and \Verb@c@).
+\end{itemize}
+
+Expressions are grouped using round brackets and meta characters escaped using single backslashes.
+In a character class consecutive characters can be abbreviated using \Verb@-@, e.g. \Verb@[0-9]@ to match any digit.
+
 \section{Strongly Regular Grammars}\label{sec:background:srg}
 
 $\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$ of some grammar:
@@ -47,11 +63,11 @@ A production rule is right-linear if it is of the form $A \rightarrow w \alpha$,
 
 
 \section{Code Property Graph}
-The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \ac{cpg} out of source code of a set of different programming languages.
+The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \acf{cpg} out of source code of a set of different programming languages.
 
 This graph is used as a backend in the static analysis tool Codyze\footnote{https://www.codyze.io}.
 
-The \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key - value pairs called properties which contain general information for the element. For example, a Node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
+A \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key - value pairs called properties which contain general information for the element. For example, a Node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
 
 Users of the library can extend this functionality by adding additional passes, which is how we implement the hotspot collection in this thesis.
 

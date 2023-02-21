@@ -14,7 +14,7 @@ To make the obtained information usable for further analysis, we need to create 
 While details on how the obtained information is analyzed further are not in the scope of this thesis, providing more information about strings can be useful for detecting string based vulnerabilities like injections.
 
 For example, consider a string variable, that is used as an SQL query and is determined to be described by the regular expression \Verb@DELETE \* FROM myTable WHERE id='.*'@.
-This information can be used to issue a warning during a static analysis, because the analyzed program allows for an arbitrary unchecked string to be inserted into the SQL query, which is a severe security issue.
+This information can be used to issue a warning during a static analysis, because the analyzed program allows for an arbitrary unchecked string to be inserted into the SQL query, which is a severe security vulnerability.
 
 \begin{comment}
 	

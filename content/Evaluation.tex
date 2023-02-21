@@ -115,6 +115,38 @@ public class Tricky{
 }
 \end{lstlisting}
 
+\subsubsection{SQL query sanitization}
+
+Since the Tricky example is artificially complex, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to escape an SQL input.
+
+Note that the given code does not compile as \lstinline|Connection| is an interface and cannot be instantiated, but as this is not relevant for our analysis we ignore it for the sake of brevity.
+
+Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@ as a result. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
+
+The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ inserted for \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the risk compared to unfiltered input.
+
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization code example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
+import java.sql.*;
+public class DatabaseSanitization{
+	public static void main(String[] args) throws SQLException {
+		String input = args[1];
+		
+		String param = (args[2] == "id") ? "id" : "name";
+		String sanitized = sanitize(input);
+		
+		Statement stmnt = (new Connection()).createStatement();
+		stmnt.executeQuery(
+			"DELETE * FROM users WHERE " + 
+			param + " = \'" + sanitized + "\'"
+		);
+	}
+	
+	public static String sanitize(String input){
+		return input.replace('\'', ' ').replace('-', ' ');
+	}
+}
+\end{lstlisting}
+
 \subsubsection{Juliet}
 
 We also analyzed some of the test cases provided by the Juliet Java test suite. The Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
@@ -128,38 +160,6 @@ The cases differ in the data flow from the source of the \lstinline|data| string
 For the case described above, we obtain the regular expression \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
 
 While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a severe security risk, because any injection string could be inserted as a value for \lstinline|data|, signified by the wildcard pattern \Verb@.*@.
-
-\subsubsection{SQL query sanitization}
-
-Since the Tricky example is artificially complex and the Juliet test cases have comparably low complexity, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to escape an SQL input.
-
-Note that the given code does not compile as \lstinline|Connection| is an interface and cannot be instantiated, but as this is not relevant for our analysis we ignore it for the sake of brevity.
-
-Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'-]*'))@ as a result. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
-
-The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ inserted for \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the risk compared to unfiltered input.
-
-\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization code example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
-	import java.sql.*;
-	public class DatabaseSanitization{
-		public static void main(String[] args) throws SQLException {
-			String input = args[1];
-			
-			String param = (args[2] == "id") ? "id" : "name";
-			String sanitized = sanitize(input);
-			
-			Statement stmnt = (new Connection()).createStatement();
-			stmnt.executeQuery(
-			"DELETE * FROM users WHERE " + 
-			param + " = \'" + sanitized + "\'"
-			);
-		}
-		
-		public static String sanitize(String input){
-			return input.replace('\'', ' ').replace('-', ' ');
-		}
-	}
-\end{lstlisting}
 
 \subsection{Performance}\label{sec:eval:peformance}
 
@@ -191,11 +191,11 @@ For both plots we averaged the measurements of 100 runs after we trimmed the hig
 	}}
 	\begin{tikzpicture}
 		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
-			\addplot[fill=red!40] coordinates {(1004.1666666666666, 4)};
-			\addplot[fill=gray!40] coordinates {(469.55, 3)};
-			\addplot[fill=purple!40] coordinates {(208.81666666666666, 2)};
-			\addplot[fill=orange!40] coordinates {(609.7, 1)};
-			\addplot[fill=blue!40] coordinates {(2127.1666666666665, 0)};
+			\addplot[fill=red!40] coordinates {(901.1666666666666, 4)};
+			\addplot[fill=gray!40] coordinates {(186.56666666666666, 3)};
+			\addplot[fill=purple!40] coordinates {(186.83333333333334, 2)};
+			\addplot[fill=orange!40] coordinates {(808.6333333333333, 1)};
+			\addplot[fill=blue!40] coordinates {(2494.7833333333333, 0)};
 			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
 		\end{axis}
 	\end{tikzpicture}
@@ -219,17 +219,84 @@ For both plots we averaged the measurements of 100 runs after we trimmed the hig
 	}}
 	\begin{tikzpicture}
 		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
-			\addplot[fill=red!40] coordinates {(944.05, 5)};
-			\addplot[fill=gray!40] coordinates {(434.3333333333333, 4)};
-			\addplot[fill=purple!40] coordinates {(194.41666666666666, 3)};
-			\addplot[fill=orange!40] coordinates {(592.6666666666666, 2)};
-			\addplot[fill=green!40] coordinates {(300.8833333333333, 1)};
-			\addplot[fill=blue!40] coordinates {(326.76666666666665, 0)};
+			\addplot[fill=red!40] coordinates {(939.9, 5)};
+			\addplot[fill=gray!40] coordinates {(197.26666666666668, 4)};
+			\addplot[fill=purple!40] coordinates {(192.28333333333333, 3)};
+			\addplot[fill=orange!40] coordinates {(910.3666666666667, 2)};
+			\addplot[fill=green!40] coordinates {(314.96666666666664, 1)};
+			\addplot[fill=blue!40] coordinates {(337.3333333333333, 0)};
 			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,DFA creation,Regex creation}
 		\end{axis}
 	\end{tikzpicture}
 	\caption{Durations of Tricky example with \ac{dfa} creation in $\mu s$}
 	\label{fig:eval:plot:trickyDFA}
+\end{figure}
+
+\subsubsection{SQL query sanitization}
+
+Figure \ref{fig:eval:plot:sqlSani} shows the execution time of analyzing the SQL query sanitization example from the previous section. Similar to the Tricky example, the plot shows the average of 100 measurements trimmed by 20\%. 
+
+Note the different scale of the x axis compared to the previous examples. The difference compared to the other plots is explained with the different complexity of the analyzed code. Since the SQL query sanitization example is considerably less complex than the Tricky example, naturally the analysis execution time is lower. 
+
+Figure \ref{fig:eval:plot:sqlSaniDfa} again shows the execution times of the query sanitization example, but with the additional step of creating a \ac{dfa} before performing the state elimination algorithm.
+
+Due to the characteristics of this example, like a simpler data flow, the resulting \ac{nfa} already is a \ac{dfa}. Therefore, the unnecessary \ac{dfa} creation just adds additional time, without significantly changing the execution time of the state elimination algorithm. This shows, that whether converting the automaton to a \ac{dfa} improves the execution time is dependent on properties of the input.
+
+\begin{figure}
+	\pgfplotsset{stackedBar/.style={
+		title=SQL query sanitization,
+		xbar stacked,
+		width=15cm,
+		axis y line*= none, axis x line*= bottom,
+		xmajorgrids = true,
+		xmin=0,xmax=2500,
+		ytick=\empty,
+		yticklabels = {},
+		tick align = outside, xtick pos = left,
+		bar width=6mm, y=8mm,
+		enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(737.6166666666667, 4)};
+			\addplot[fill=gray!40] coordinates {(163.65, 3)};
+			\addplot[fill=purple!40] coordinates {(72.43333333333334, 2)};
+			\addplot[fill=orange!40] coordinates {(480.3, 1)};
+			\addplot[fill=blue!40] coordinates {(295.3333333333333, 0)};
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of SQL query sanitization test case in $\mu s$}
+	\label{fig:eval:plot:sqlSani}
+\end{figure}
+
+\begin{figure}
+	\pgfplotsset{stackedBar/.style={
+			title=SQL query sanitization with DFA,
+			xbar stacked,
+			width=15cm,
+			axis y line*= none, axis x line*= bottom,
+			xmajorgrids = true,
+			xmin=0,xmax=2500,
+			ytick=\empty,
+			yticklabels = {},
+			tick align = outside, xtick pos = left,
+			bar width=6mm, y=8mm,
+			enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
+	}}
+	\begin{tikzpicture}
+		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
+			\addplot[fill=red!40] coordinates {(726.5, 5)};
+			\addplot[fill=gray!40] coordinates {(166.48333333333332, 4)};
+			\addplot[fill=purple!40] coordinates {(76.36666666666666, 3)};
+			\addplot[fill=orange!40] coordinates {(459.1666666666667, 2)};
+			\addplot[fill=green!40] coordinates {(117.43333333333334, 1)};
+			\addplot[fill=blue!40] coordinates {(288.3333333333333, 0)};
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,DFA creation,Regex creation}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Durations of SQL query sanitization test case with DFA creation in $\mu s$}
+	\label{fig:eval:plot:sqlSaniDfa}
 \end{figure}
 
 \subsubsection{Juliet}
@@ -239,7 +306,9 @@ We analyzed the execution time of each database related hotspot of all 2224 test
 Figure \ref{fig:eval:plot:juliet} shows the averaged execution times of each step, again trimmed by 20\%.
 We can see, that the percentage of the total time spent on regex creation is lower compared to the plot for the Tricky example in Figure \ref{fig:eval:plot:tricky}, even without the intermediary \ac{dfa} step. This is due to the fact that the resulting automata for the Juliet test cases are very small, ranging from 2 to 4 states, compared to the 28 nodes of the Tricky \ac{nfa}.
 
-Also note the difference in the scale of the x-axis of factor 10, which shows that the Juliet test cases are significantly faster, again due to their comparatively lower complexity.
+Again note the difference in the scale of the x-axis of factor 10, which shows that the Juliet test cases are analyzed significantly faster, again due to their comparatively lower complexity.
+
+Also note that the relative execution times of the different steps are fairly consistent among all the different examples.
 
 
 \begin{figure}
@@ -258,50 +327,16 @@ Also note the difference in the scale of the x-axis of factor 10, which shows th
 	}}
 	\begin{tikzpicture}
 		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
-			\addplot[fill=red!40] coordinates {(148.74632967849843, 4)};
-			\addplot[fill=gray!40] coordinates {(58.49117264448987, 3)};
-			\addplot[fill=purple!40] coordinates {(14.738710276900205, 2)};
-			\addplot[fill=orange!40] coordinates {(47.58520721055566, 1)};
-			\addplot[fill=blue!40] coordinates {(63.04980486898346, 0)};
-				\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
+			\addplot[fill=red!40] coordinates {(161.81493868450391, 4)};
+			\addplot[fill=gray!40] coordinates {(28.68004459308807, 3)};
+			\addplot[fill=purple!40] coordinates {(16.914715719063544, 2)};
+			\addplot[fill=orange!40] coordinates {(55.07302118171683, 1)};
+			\addplot[fill=blue!40] coordinates {(73.1189149015236, 0)};
+			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton creation,Regex creation}
 		\end{axis}
 	\end{tikzpicture}
 	\caption{Durations of Juliet test cases in $\mu s$}
 	\label{fig:eval:plot:juliet}
-\end{figure}
-
-\subsubsection{SQL query sanitization}
-
-Figure \ref{fig:eval:plot:sqlSani} shows the execution time of analyzing the SQL query sanitization example from the previous section. Similar to the Tricky example, the plot shows the average of 100 measurements trimmed by 20\%. Again, note the different scale of the x axis compared to the previous examples. The difference compared to the other plots is explained with the different complexity of the analyzed code. Since the SQL query sanitization example is considerably less complex than the Tricky example, naturally the analysis execution time is lower. Similarly, for the Juliet examples smaller grammars and consequently smaller automata are created, and therefore the analysis is faster.
-
-Note that the relative execution times of the different steps are fairly consistent among the different examples.
-
-\begin{figure}
-	\pgfplotsset{stackedBar/.style={
-		title=SQL query sanitization,
-		xbar stacked,
-		width=15cm,
-		axis y line*= none, axis x line*= bottom,
-		xmajorgrids = true,
-		xmin=0,xmax=1000,
-		ytick=\empty,
-		yticklabels = {},
-		tick align = outside, xtick pos = left,
-		bar width=6mm, y=8mm,
-		enlarge y limits={abs=0.625},% 0.5 + 0.5*(y - bar width)/y [TeX.sx #47995]
-	}}
-	\begin{tikzpicture}
-		\begin{axis}[stackedBar,legend style={area legend, at={(0.5,-0.15)}, anchor=north, legend columns=3}]
-			\addplot[fill=red!40] coordinates {(466.1666666666667, 4)};
-			\addplot[fill=gray!40] coordinates {(168.28333333333333, 3)};
-			\addplot[fill=purple!40] coordinates {(23.783333333333335, 2)};
-			\addplot[fill=orange!40] coordinates {(166.75, 1)};
-			\addplot[fill=blue!40] coordinates {(82.81666666666666, 0)};
-			\legend{Grammar creation,Charset approximation,Regular approximation,Automaton 	creation,Regex creation}
-		\end{axis}
-	\end{tikzpicture}
-	\caption{Durations of SQL query sanitization test case in $\mu s$}
-	\label{fig:eval:plot:sqlSani}
 \end{figure}
 
 \section{Discussion and Future work}
