@@ -16,9 +16,9 @@ Probably approx. 3-10 pages
 
 \subsection{Formal Grammars}
 
-A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start symbol.
+A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start nonterminal.
 
-In examples of grammars, we use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first production is considered to be the start symbol.
+In examples of grammars, we use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
 \acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
 Regular grammars are \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. A grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular, as the nonterminal is the last symbol in the first production but the first symbol in the latter.
@@ -60,7 +60,7 @@ Here $V$ is $\Sigma \cup N$, so the set of all symbols, terminal and nonterminal
 A grammar is strongly regular if the production rules in each such equivalence class are either all right-linear or left-linear.
 
 A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
-
+\Aclp{srg} are guaranteed to generate regular languages \cite{mohri_nederhof}.
 
 \section{Code Property Graph}
 The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \acf{cpg} out of source code of a set of different programming languages.

@@ -96,7 +96,6 @@ Consider the code example in Listing \ref{lst:grammar_example} for the following
 \lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In Listing \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
 
 \lstinline|ConcatProduction|s are created for \lstinline|BinaryOperator| nodes that represent a string concatenation using the \lstinline|+| operator. For the example in Listing \ref{lst:grammar_example} the nonterminal corresponding to the \lstinline|BinaryOperator| node for the \lstinline|+| in line 2 would have a \lstinline|ConcatProduction| with the right hand side nonterminals corresponding to the nodes for \lstinline|s|$^3$ and the string literal respectively.
-% TODO implement append?
 
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
 For example, for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string "abc". \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular lanuage \lstinline|.*|, matching all strings.
@@ -119,6 +118,9 @@ In this case, we can add a \lstinline|TerminalProduction| with the \lstinline|Te
 	
 
 \section{Regular Approximation}\label{sec:approximation}
+
+To transform the created grammar into a regular expression, we need to approximate the \ac{cfg} we obtained like described in the previous section. Since basic regular expressions accept regular languages, the result of this approximation has to be a type of grammar that produces only regular languages to allow direct conversion to regular expressions without loosing information. Using the two different approximation steps described in the following section, the \ac{cfg} is approximated into a \acl{srg}.
+
 \subsection{Character Set Approximation}\label{sec:charsetApprox}
 To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we need to eliminate all cycles in our grammar that contain operation productions \cite{mohri_nederhof}.
 
@@ -174,9 +176,10 @@ For comparison for a \lstinline|replace| operation, where the newly inserted cha
 These approximations are used in the fixpoint computation to assign character sets.
 As mentioned above, in the example in Figure \ref{fig:charset:grammar} the character set for $A$ is $\{\text{'a', 'b', 'c'}\}$. To obtain the character set of $S$, we apply the transformation defined by the $replace[c,x]$ operation to set of $A$, which gives us $(\{\text{'a', 'b', 'c'}\} \setminus \{\text{'c'}\}) \cup \{\text{'x'}\} = \{\text{'a', 'b', 'x'}\}$ as the character set of $S$.
 
-To determine the \acp{scc}, we use Tarjan's algorithm \cite{tarjan}. This algorithm topologically sorts the returned components in reverse order, which is necessary for the fixpoint computation to terminate.
+To determine the \acp{scc}, we use Tarjan's algorithm \cite{tarjan}.
+The \acp{scc} of a graph form a \ac{dag}, because if the graph of \acp{scc} would contain a cycle, all contained components would be strongly connected and therefore joined into one component. This \ac{dag} implies that there exists a topological ordering of the \acp{scc} \cite{mit_algorithms}.
+Tarjan's algorithm topologically sorts the returned components in reverse order as a byproduct, which is necessary for the fixpoint computation to terminate.
 During the computation, for a given nonterminal $N$, its charset is updated using the charsets of its successors. The reverse topological ordering of the components ensures, that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has already been handled earlier.
-% TODO mention that graph of SCCs is DAG (and why)?
 
 To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$.
 
@@ -201,8 +204,8 @@ The behavior of the the set operations \lstinline|union| and \lstinline|intersec
 	& \text{\lstinline|SetCharSet intersect SetCharSet| } && \hat{=} & &\phantom{{}={}} S_1 \cap S_2
 \end{alignat*}
 
-This approach reduces the storage needed to represent the commonly occurring type of character sets, where only a few characters are removed from $\Sigma$. It also simplifies the creation of a regular expression from the character set, since the approach of using a character class containing all characters in the set produces very large character classes for sets with cardinality close to $|\Sigma|$. Using our approach, we can represent a \lstinline|SigmaCharSet| using negated character classes. Since most character sets either contain a comparatively small amount of given chars, or all chars except a few this reduces the average length of the resulting regular expressions. 
-For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b', 'c'}\}$ gives us the regular expression \lstinline|[abc]*|, while the \lstinline|SigmaCharSet| representing $\Sigma \setminus \{\text{'0', '1', '2'}\}$ corresponds to \lstinline|[^012]*|.
+This approach reduces the storage needed to represent a commonly occurring type of character sets, where only a few characters are removed from $\Sigma$. It also simplifies the creation of a regular expression from the character set, since the approach of using a character class containing all characters in the set produces very large character classes for sets with cardinality close to $|\Sigma|$. Using our approach, we can represent the regular expression created from a \lstinline|SigmaCharSet| using negated character classes. Since most character sets either contain a comparatively small amount of given chars, or all chars except a few this reduces the average length of the resulting regular expressions. 
+For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b', 'c'}\}$ is used to create the regular expression \lstinline|[abc]*|, while the \lstinline|SigmaCharSet| representing $\Sigma \setminus \{\text{'0', '1', '2'}\}$ corresponds to \lstinline|[^012]*|.
 
 		
 \subsection{Mohri-Nederhof Approximation}\label{sec:mohriNederhofApprox}
@@ -252,6 +255,10 @@ Thus, to approximate a grammar we view it as a directed graph and find its \acp{
 
 \section{Transformation to Regular Expression}
 
+In the previous section, we obtained a \acl{srg}. This grammar is now converted into a regular expression, by first transforming into an automaton like described in Section \ref{sec:nederhofAlgorithm} and then creating a regular expression from this automaton.
+
+Since a \ac{srg} generates a regular language and both steps in the transformation to a regular expression create an equivalent output from their input, the resulting regular expression accepts the language generated by the original \ac{srg}.
+
 \subsection{Strongly Regular Grammar to Automaton}\label{sec:nederhofAlgorithm}
 
 \subsubsection{Algorithm}
@@ -260,6 +267,58 @@ Nederhof describes an algorithm to transform a \ac{srg} into an equivalent \ac{n
 More specifically, the algorithm creates an $\epsilon$-\ac{nfa}. The generated automaton always accepts the same language as the given grammar.
 
 The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac{nfa} $(K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $(\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
+
+\begin{algorithm}[!h]
+	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
+	\label{nederhofAlg}
+	\begin{algorithmic}[1]
+		\State $\mathbf{let}$ $\Delta = \emptyset; s = \texttt{create\_state()}; f = \texttt{create\_state()}; F = \{f\}; K = \{s, f\}$
+		\State \Call{make\_fa}{$s, S, f$} \label{alg:initialCall}
+		
+		\Procedure{make\_fa}{$q_0, \alpha, q_1$}
+		\If{$\alpha = \epsilon$} \label{alg:eps}
+		\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_1)}$ \Comment{add $\epsilon$ transition from state $q_0$ to state $q_1$}
+		\ElsIf{$\alpha = a,\mathbf{\ some\ }a \in \Sigma^*$}
+		\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \alpha, q_1)}$ \label{alg:singleTerm}
+		\ElsIf{$\alpha = X\beta,\mathbf{\ some\ } X \in V, \beta \in V^* \mathbf{\ such\ that \ }|\beta|>0$}
+		\State  $\mathbf{let}$ $q = \texttt{create\_state()};$
+		\State \hphantom{$\mathbf{let}$} $K = K \cup \{q\}$ \Comment{create some new state $q$ and add it to the automaton}
+		\State \Call{make\_fa}{$q_0,X,q$}
+		\State \Call{make\_fa}{$q, X,q_1$}
+		\Else
+		\State  $\mathbf{let}$ $A = \alpha$ \Comment{$\alpha$ must be a single nonterminal}
+		\If{$A \in N_i \mathbf{\ some\ } i$}
+		\For{$B \in N_i$}
+		\State $\mathbf{let}$ $q_B = \texttt{create\_state()};\ K = K \cup \{q_B\}$
+		\EndFor
+		% TODO define recursive
+		\If{$recursive(N_i) = left$}
+		\For{$(C \rightarrow X_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
+		\State \Call{make\_fa}{$q_0,X_1 ... X_m,q_C$} \label{alg:left:firstrec}
+		\EndFor
+		\For{$(C \rightarrow DX_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:left}
+		\State \Call{make\_fa}{$q_D,X_1 ... X_m,q_C$}
+		\EndFor
+		\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_A, \epsilon, q_1)}$ \label{alg:left:eps}
+		\Else
+		\For{$(C \rightarrow X_1 ... X_m) \in P$  $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
+		\State \Call{make\_fa}{$q_C, X_1 ... X_m,q_1$} \label{alg:right:firstrec}
+		\EndFor
+		\For{$(C \rightarrow X_1 ... X_mD) \in P$  $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:right}
+		\State \Call{make\_fa}{$q_C,X_1 ... X_m,q_D$}
+		\EndFor
+		\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_A)}$ \label{alg:right:eps}
+		\EndIf
+		\Else
+		\For{$(A \rightarrow \beta)$} \Comment{A is not recursive} \label{alg:nonrecloop}
+		\State \Call{make\_fa}{$q_0,\beta,q_1$}  \label{alg:nonrec}
+		\EndFor
+		\EndIf
+		\EndIf
+		\EndProcedure
+		
+	\end{algorithmic}
+\end{algorithm}
 
 The \texttt{create\_state} function used in the pseudo code just creates a new state object which can then be added to the automaton.
 
@@ -392,58 +451,6 @@ Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:
 		\label{fig:rec:automaton2}
 	\end{minipage}
 \end{figure}
-
-\begin{algorithm}[h]
-	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
-	\label{nederhofAlg}
-	\begin{algorithmic}[1]
-		\State $\mathbf{let}$ $\Delta = \emptyset; s = \texttt{create\_state()}; f = \texttt{create\_state()}; F = \{f\}; K = \{s, f\}$
-		\State \Call{make\_fa}{$s, S, f$} \label{alg:initialCall}
-		
-		\Procedure{make\_fa}{$q_0, \alpha, q_1$}
-		\If{$\alpha = \epsilon$} \label{alg:eps}
-			\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_1)}$ \Comment{add $\epsilon$ transition from state $q_0$ to state $q_1$}
-		\ElsIf{$\alpha = a,\mathbf{\ some\ }a \in \Sigma^*$}
-			\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \alpha, q_1)}$ \label{alg:singleTerm}
-		\ElsIf{$\alpha = X\beta,\mathbf{\ some\ } X \in V, \beta \in V^* \mathbf{\ such\ that \ }|\beta|>0$}
-			\State  $\mathbf{let}$ $q = \texttt{create\_state()};$
-			\State \hphantom{$\mathbf{let}$} $K = K \cup \{q\}$ \Comment{create some new state $q$ and add it to the automaton}
-			\State \Call{make\_fa}{$q_0,X,q$}
-			\State \Call{make\_fa}{$q, X,q_1$}
-		\Else
-			\State  $\mathbf{let}$ $A = \alpha$ \Comment{$\alpha$ must be a single nonterminal}
-			\If{$A \in N_i \mathbf{\ some\ } i$}
-				\For{$B \in N_i$}
-					\State $\mathbf{let}$ $q_B = \texttt{create\_state()};\ K = K \cup \{q_B\}$
-				\EndFor
-				% TODO define recursive
-				\If{$recursive(N_i) = left$}
-					\For{$(C \rightarrow X_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
-						\State \Call{make\_fa}{$q_0,X_1 ... X_m,q_C$} \label{alg:left:firstrec}
-					\EndFor
-					\For{$(C \rightarrow DX_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:left}
-						\State \Call{make\_fa}{$q_D,X_1 ... X_m,q_C$}
-					\EndFor
-					\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_A, \epsilon, q_1)}$ \label{alg:left:eps}
-				\Else
-					\For{$(C \rightarrow X_1 ... X_m) \in P$  $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
-						\State \Call{make\_fa}{$q_C, X_1 ... X_m,q_1$} \label{alg:right:firstrec}
-					\EndFor
-					\For{$(C \rightarrow X_1 ... X_mD) \in P$  $\mathbf{such\ that}$ $C, D \in N_i \land X_1, ..., X_m \notin N_i$} \label{alg:recnt:right}
-						\State \Call{make\_fa}{$q_C,X_1 ... X_m,q_D$}
-					\EndFor
-					\State  $\mathbf{let}$ $\Delta = \Delta \cup {(q_0, \epsilon, q_A)}$ \label{alg:right:eps}
-				\EndIf
-			\Else
-				\For{$(A \rightarrow \beta)$} \Comment{A is not recursive} \label{alg:nonrecloop}
-					\State \Call{make\_fa}{$q_0,\beta,q_1$}  \label{alg:nonrec}
-				\EndFor
-			\EndIf
-		\EndIf
-		\EndProcedure
-		
-	\end{algorithmic}
-\end{algorithm}
 
 \subsubsection{Operation Productions}\label{opProduction}
 
@@ -711,7 +718,7 @@ Therefore, in each algorithm run, the state with the smallest weight is chosen f
 Delgado and Morais show that using this heuristic produces significantly shorter expressions compared to the naive state elimination \cite{delgado}. Gruber et al. also show it outperforms almost all other heuristics they considered \cite{gruber}.
 Improving the algorithm further by implementing a look-ahead additionally to the heuristic also improves the results, but adds more complexity and impairs the algorithms performance \cite{delgado}.
 
-Another reduction of the regular expression size can often be obtained by first converting the automaton to a \ac{dfa}, for example using the powerset construction. For a given \ac{nfa} with $n$ states, the \ac{dfa} obtained by using the powerset construction to convert the \ac{nfa} can have up to $2^n$ states. However, we observed that for most \acp{nfa} generated using Nederhof's algorithm, the resulting \acp{dfa} is significantly smaller than the input \ac{nfa} or even minimal. This \ac{dfa} can be minimized using common algorithms like Hopcroft's or Brzozowski's algorithm for even better results.
+Another reduction of the regular expression size can often be obtained by first converting the automaton to a \ac{dfa}, for example using the powerset construction. For a given \ac{nfa} with $n$ states, the \ac{dfa} obtained by using the powerset construction to convert the \ac{nfa} can have up to $2^n$ states. However, we observed that for many \acp{nfa} generated using Nederhof's algorithm, the resulting \acp{dfa} is significantly smaller than the input \ac{nfa} or even minimal. This \ac{dfa} can be minimized using common algorithms like Hopcroft's or Brzozowski's algorithm for even better results.
 
 Since it is unclear, whether conversion to \acp{dfa} always leads to better results, we can use both approaches and return the shorter expression.
 

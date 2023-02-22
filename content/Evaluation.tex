@@ -9,7 +9,7 @@ In this section, we first analyze the quality of the results of our approach, e.
 
 \subsection{Correctness}\label{sec:eval:correctness}
 
-We analyze the resulting regular expressions of a synthetic example from Christensen et al. \cite{brics} and the SQL Injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}.
+We analyze the resulting regular expressions of two synthetic code examples, one from Christensen et al. \cite{brics} and one custom example. We also analyze the results for the SQL Injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}.
 
 \subsubsection{Tricky}
 
@@ -163,7 +163,7 @@ While the interpretation and analysis of the obtained expressions is out of scop
 
 \subsection{Performance}\label{sec:eval:peformance}
 
-Further, we measured the execution time of the different steps in our analysis approach. As in the previous section we considered the Tricky example and the test cases of the Juliet test suite. 
+Further, we measured the execution time of the different steps in our analysis approach. As in the previous section we considered the two synthetic examples and the test cases of the Juliet test suite. 
 
 In the following, all mentioned averages are truncated averages, which means that before calculating the average, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This is done to eliminate the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling or caching. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
 
@@ -240,7 +240,7 @@ Note the different scale of the x axis compared to the previous examples. The di
 
 Figure \ref{fig:eval:plot:sqlSaniDfa} again shows the execution times of the query sanitization example, but with the additional step of creating a \ac{dfa} before performing the state elimination algorithm.
 
-Due to the characteristics of this example, like a simpler data flow, the resulting \ac{nfa} already is a \ac{dfa}. Therefore, the unnecessary \ac{dfa} creation just adds additional time, without significantly changing the execution time of the state elimination algorithm. This shows, that whether converting the automaton to a \ac{dfa} improves the execution time is dependent on properties of the input.
+Due to the characteristics of this example, like a simpler data flow, the resulting \ac{nfa} already is a \ac{dfa}. Therefore, the - in this case - unnecessary \ac{dfa} creation just adds additional time, without significantly changing the execution time of the state elimination algorithm. This shows, that whether converting the automaton to a \ac{dfa} improves the execution time is dependent on properties of the input.
 
 \begin{figure}
 	\pgfplotsset{stackedBar/.style={
@@ -387,6 +387,14 @@ We mostly focused on simple strings, but in general everything we described can 
 
 As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach.
 
+\subsection{State Elimination Heuristics}
+
+Moreira et al. analyzed and evaluated different existing and proposed new heuristics for choosing a good order to eliminate states during the state elimination algorithm \cite{moreira_heuristics}.
+
+While they conclude that the method by Delgado and Morais \cite{delgado} we use is similar to their newly proposed heuristics, they also note that the new strategies outperform Delgado's for small automata. Since the automata we handle are comparatively small, adapting our implementation to use one of the proposed new heuristic could improve the quality of the results.
+
+Moreira et al. also observe that the strategy of taking the best result of using all three heuristics as a final result leads to a gain of 25\%. This approach of trying multiple strategies is also used by the powerful Vcsn platform for computations on finite state machines \cite{vcsn}.
+
 \subsection{Automata Centric Approach}
 
 We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
@@ -399,6 +407,7 @@ Now we can check, whether $R$'s language is empty to determine, whether all stri
 Additionally, we can check whether $M$ and $N$ are equivalent to determine, whether the query expression matches the computed result.
 
 Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned advanced query possibilities.
+
 \begin{comment}
 \begin{itemize}
 \item How did you test/evaluate your PoC?
