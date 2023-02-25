@@ -75,7 +75,7 @@ To create the grammar for a given \ac{cpg} node, we traverse the \ac{dfg} backwa
 % The starting node can be one of the hotspot nodes collected by the aforementioned \lstinline|Pass|, but in general the grammar creation is independent of the hotspot collection.
 For each visited node, we add a \lstinline|Nonterminal| and the fitting productions to our grammar. 
 
-Our Grammar contains the following types of productions:
+Our grammar contains the following types of productions:
 \begin{itemize}
 	\item \lstinline|UnitProduction|:  $X \rightarrow Y$ for references between nodes
 	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$ for concatenation of two nodes
@@ -110,10 +110,10 @@ This language agnostic representation of string operation allows developers of t
 
 Unlike Christensen et al. \cite{brics}, we do not consider the total \ac{dfg} when extracting the grammar. They parse the whole graph into a grammar describing all nodes, while we create the grammar starting from a single node and ignore all parts of the graph not connected via \ac{dfg} edges to this node.
 
-Since often the majority of a large program is not relevant for a specific node, this reduces the amount of nodes we need to handle and the size of the resulting grammar, therefore leading to performance improvements.
+Since often the majority of a large program is not relevant for a specific node, this reduces the amount of nodes we need to handle during analysis. Consequentially, this reduces the size of the resulting grammar, therefore leading to performance improvements.
 
-Additionally, we can traverse the \ac{dfg} conditionally, stopping at nodes representing numbers. If the traversal reaches such a node, it uses a \lstinline|ValueEvaluator| which tries to obtain a value representing the node.
-For example for an integer created by usual arithmetic operations, the \lstinline|ValueEvaluator| can obtain the resulting value that is added to a string.
+Additionally, we can traverse the \ac{dfg} conditionally, stopping at nodes representing numbers. If the traversal reaches such a node,we use an existing analysis that tries to compute the precise value.
+For example for an integer created by usual arithmetic operations, this analysis can obtain the resulting value that is added to a string.
 In this case, we can add a \lstinline|TerminalProduction| with the \lstinline|Terminal| representing the value literal and otherwise, if the value is not known, the \lstinline|Terminal| contains a regular expression matching all numbers of the present type, e.g. \lstinline{"0|(-?[1-9][0-9]*)"} for integrals.
 	
 
@@ -146,9 +146,9 @@ We assign a character set to each nonterminal $N$ using a fixpoint iteration ins
 For productions with terminals on the right hand side, the character set is just the set of all characters occurring in the terminal. For the terminals that are regular expressions, we create the character set when we construct the regular expression. For example for the regular expression representing integers mentioned above, the character set contains all digits and the minus sign.
 For concatenation productions like $A \rightarrow BC$ in the example above, we take the union of the two character sets of the two nonterminals on the right hand side.
 
-For the example grammar in Figure \ref{fig:charset:grammar} $B$ represents the word $ba$ and and $C$ represents $ca$, therefore the corresponding sets of characters are  $\{\text{'a', 'b'}\}$ and  $\{\text{'a', 'c'}\}$ respectively. The words that can be generated from $A$ are combinations of $B$ and $C$ and therefore always contain all characters in the character sets of $B$ and $C$. Thus, the character set for $A$ is $\{\text{'a', 'b'}\} \cup \{\text{'a', 'c'}\} = \{\text{'a', 'b', 'c'}\}$.
+For the example grammar in Figure \ref{fig:charset:grammar}, $B$ represents the word $ba$ and and $C$ represents $ca$, therefore the corresponding sets of characters are  $\{\text{'a', 'b'}\}$ and  $\{\text{'a', 'c'}\}$ respectively. The words that can be generated from $A$ are combinations of $B$ and $C$ and therefore always contain all characters in the character sets of $B$ and $C$. Thus, the character set for $A$ is $\{\text{'a', 'b'}\} \cup \{\text{'a', 'c'}\} = \{\text{'a', 'b', 'c'}\}$.
 
-Each operation defines a character set transformation - a function $T_{op} : 2^\Sigma \rightarrow 2^\Sigma$ - that approximates how the application of the given operation changes the character set. Here $\Sigma$ represents the set of all possible characters.
+Each operation defines a character set transformation - a function $T_{op} : 2^\Sigma \rightarrow 2^\Sigma$ - that approximates how the application of the given operation changes the character set. Here, $\Sigma$ represents the set of all possible characters.
 For example the character set transformation for a \lstinline|replace| operation, where a known character \lstinline|o| is replaced by a known character \lstinline|n| has the character set transformation described in Formula \ref{math:replace:known}.
 
 \begin{align}
@@ -161,7 +161,7 @@ For example the character set transformation for a \lstinline|replace| operation
 	\label{math:replace:known}
 \end{align}
 
-For comparison for a \lstinline|replace| operation, where the newly inserted character is not known, if the replaced character is contained in $S$, the set is transformed to $\Sigma$, since the inserted character could be any element of $\Sigma$.
+In comparison, for a \lstinline|replace| operation, where the newly inserted character is not known, the transformation is defined as shown in Formula \ref{math:replace:unknown}. Here, if the replaced character is contained in $S$, the set is transformed to $\Sigma$, since the newly inserted character could be any element of $\Sigma$.
 
 \begin{align}
 	\centering
@@ -187,7 +187,11 @@ To find the cycles in the grammar, we check for each nonterminal $N$ in a given 
 
 \subsubsection{Character Set Implementation}
 
-To represent character sets easily, we have two different implementations, both conforming to a common \lstinline|CharSet| interface that requires functions like \lstinline|union : CharSet -> CharSet| and \lstinline|intersect : CharSet -> CharSet|.
+In real world applications, the occurring character sets usually either contain only a few characters, for example the alphanumericals in a string literal, or almost all characters, for example when a single character is removed from an unknown variable represented by $\Sigma$.
+
+We also need to efficiently convert these types of sets into short regular expressions. A naive implementation like joining all contained characters using the regular expression choice operator would lead to extremely long expressions for very large sets.
+
+To solve this problem and easily represent these two extremes, we have two different implementations, both conforming to a common \lstinline|CharSet| interface that requires functions like \lstinline|union : CharSet -> CharSet|, \lstinline|intersect : CharSet -> CharSet| and functionality for adding and removing characters.
 
 The first, \lstinline|SetCharSet|, is mostly a simple wrapper around a \lstinline|Set<Char>| containing the characters.
 The second, \lstinline|SigmaCharSet|, is used to easily represent sets like $\Sigma \setminus \{a, b, c\}$ by storing a \lstinline|Set<Char>| containing the characters $not$ contained in the set, while all other characters are assumed to be members.
@@ -204,7 +208,7 @@ The behavior of the the set operations \lstinline|union| and \lstinline|intersec
 	& \text{\lstinline|SetCharSet intersect SetCharSet| } && \hat{=} & &\phantom{{}={}} S_1 \cap S_2
 \end{alignat*}
 
-This approach reduces the storage needed to represent a commonly occurring type of character sets, where only a few characters are removed from $\Sigma$. It also simplifies the creation of a regular expression from the character set, since the approach of using a character class containing all characters in the set produces very large character classes for sets with cardinality close to $|\Sigma|$. Using our approach, we can represent the regular expression created from a \lstinline|SigmaCharSet| using negated character classes. Since most character sets either contain a comparatively small amount of given chars, or all chars except a few this reduces the average length of the resulting regular expressions. 
+This approach reduces the storage needed to represent the type of character set, where only a few characters are removed from $\Sigma$ compared to always storing all contained characters. It also simplifies the creation of regular expression from the character set. As mentioned above, always using all contained characters in the regular expression produces large regular expressions for sets with cardinality close to $|\Sigma|$. Using our approach, we can represent the regular expression created from a \lstinline|SigmaCharSet| using negated character classes and a \lstinline|SetCharSet| using normal character classes. This reduces the average length of the resulting expressions, compared to always using the same approach.
 For example the \lstinline|SetCharSet| that represents the set $\{\text{'a', 'b', 'c'}\}$ is used to create the regular expression \lstinline|[abc]*|, while the \lstinline|SigmaCharSet| representing $\Sigma \setminus \{\text{'0', '1', '2'}\}$ corresponds to \lstinline|[^012]*|.
 
 		

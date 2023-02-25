@@ -12,40 +12,19 @@ look it up (or on google).
 Probably approx. 3-10 pages
 \end{comment}
 
-\section{Preliminaries}
+We first provide some background information and notation for formalisms used in the following chapters. This includes formal grammars in \ref{sec:background:grammars}, a specific type of grammar in \ref{sec:background:srg}, automata in \ref{sec:background:automata} and regular expressions in \ref{sec:background:regex}. In \ref{sec:background:cpg}, we then describe the code property graph we use.
 
-\subsection{Formal Grammars}
+\section{Formal Grammars}\label{sec:background:grammars}
 
 A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start nonterminal.
 
-In examples of grammars, we use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
+In the context of this thesis, $\Sigma$ is the set of characters making up the strings of the analyzed programming language.
+
+To define grammars in examples, we use the notation $X \rightarrow Y$ to specify a production rule to transform some $X$ to some $Y$.
+We use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
 \acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
 Regular grammars are \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. A grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular, as the nonterminal is the last symbol in the first production but the first symbol in the latter.
-
-\subsection{Automata}
-
-A \acf{dfa} consists of a set of states $Q$, an alphabet of input symbols $\Sigma$, a transition function $\delta: Q \times \Sigma \rightarrow Q$, an initial state $q_0 \in Q$ and a set $F \subseteq Q$ of accepting states.
-For a \acf{nfa}, from a given state multiple states can be reached with the same input, so the transition function is  $\delta: Q \times \Sigma \rightarrow 2^Q$, where $2^Q$ denotes the power set of $Q$.
-
-We represent automata as graphs, where each state is a node and the transition function is represented by edges labeled with elements of $\Sigma$. The start state is marked with an incoming arrow and the accepting states are marked with double circles.
-An edge in this graph, henceforth also called transition, is denoted as $(q_1, a, q_2)$, where $q_1 \in Q$ is the origin state, $a \in \Sigma$ is the label and $q_2 \in Q$ is the target state of the edge.
-
-\subsection{Regular Expressions}
-
-We use a regular expression syntax with the following metacharacters from the Java regular expression flavor:
-
-\begin{itemize}
-	\item \Verb@*@: Kleene star. Matches the previous character zero or more times.
-	\item \Verb@.@: Wildcard. Matches any character.
-	\item \Verb@?@: Option. Matches the previous character zero or one time.
-	\item \Verb@|@: Choice. Matches either the previous or the following expression.
-	\item \Verb@[abc]@: Character class. Matches any of the contained characters (here \Verb@a@, \Verb@b@ and \Verb@c@).
-	\item \Verb@[^abc]@: Negative character class. Matches any character not contained (here anything except \Verb@a@, \Verb@b@ and \Verb@c@).
-\end{itemize}
-
-Expressions are grouped using round brackets and meta characters escaped using single backslashes.
-In a character class consecutive characters can be abbreviated using \Verb@-@, e.g. \Verb@[0-9]@ to match any digit.
 
 \section{Strongly Regular Grammars}\label{sec:background:srg}
 
@@ -62,12 +41,34 @@ A grammar is strongly regular if the production rules in each such equivalence c
 A production rule is right-linear if it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
 \Aclp{srg} are guaranteed to generate regular languages \cite{mohri_nederhof}.
 
-\section{Code Property Graph}
+\section{Automata}\label{sec:background:automata}
+
+A \acf{dfa} consists of a set of states $Q$, an alphabet of input symbols $\Sigma$, a transition function $\delta: Q \times \Sigma \rightarrow Q$, an initial state $q_0 \in Q$ and a set $F \subseteq Q$ of accepting states.
+For a \acf{nfa}, from a given state multiple states can be reached with the same input, so the transition function is  $\delta: Q \times \Sigma \rightarrow 2^Q$, where $2^Q$ denotes the power set of $Q$.
+
+We represent automata as graphs, where each state is a node and the transition function is represented by edges labeled with elements of $\Sigma$. The start state is marked with an incoming arrow and the accepting states are marked with double circles.
+An edge in this graph, henceforth also called transition, is denoted as $(q_1, a, q_2)$, where $q_1 \in Q$ is the origin state, $a \in \Sigma$ is the label and $q_2 \in Q$ is the target state of the edge.
+
+\section{Regular Expressions}\label{sec:background:regex}
+
+We use a regular expression syntax with the following metacharacters from the Java regular expression flavor:
+
+\begin{itemize}
+	\item \Verb@*@: Kleene star. Matches the previous character zero or more times.
+	\item \Verb@.@: Wildcard. Matches any character.
+	\item \Verb@?@: Option. Matches the previous character zero or one time.
+	\item \Verb@|@: Choice. Matches either the previous or the following expression.
+	\item \Verb@[abc]@: Character class. Matches any of the contained characters (here \Verb@a@, \Verb@b@ and \Verb@c@).
+	\item \Verb@[^abc]@: Negative character class. Matches any character not contained (here anything except \Verb@a@, \Verb@b@ and \Verb@c@).
+\end{itemize}
+
+Expressions are grouped using round brackets and meta characters escaped using single backslashes.
+In a character class consecutive characters can be abbreviated using \Verb@-@, e.g. \Verb@[0-9]@ to match any digit.
+
+\section{Code Property Graph}\label{sec:background:cpg}
 The library\footnote{https://github.com/Fraunhofer-AISEC/cpg} we extend in this thesis extracts a \acf{cpg} out of source code of a set of different programming languages.
 
-This graph is used as a backend in the static analysis tool Codyze\footnote{https://www.codyze.io}.
-
-A \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key - value pairs called properties which contain general information for the element. For example, a Node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
+A \ac{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements. The nodes and edges have a list of key-value pairs called properties which contain general information for the element. For example, a node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order by multiple passes \cite{cpg}.
 
 Users of the library can extend this functionality by adding additional passes, which is how we implement the hotspot collection in this thesis.
 
@@ -81,7 +82,7 @@ While the \ac{cpg} contains many different types of edges, the most relevant edg
 	System.out.println(s);
 \end{lstlisting}
 
-Consider the short code example in listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:
+Consider the short code example in Listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:
 
 \begin{itemize}
 	\item \lstinline|Literal|, representing the string literal \lstinline{"xyz"}
