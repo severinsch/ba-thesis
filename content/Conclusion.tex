@@ -1,6 +1,6 @@
 \chapter{Conclusion}\label{chapter:Conclusion}
 
-In this thesis we implemented a method to obtain information about the values of strings from the \acl{dfg} of an analyzed program. We provide a proof of concept implementation as an extension of a \acl{cpg} implementation used in the static analysis tool Codyze.
+In this thesis we implemented a method to obtain information about the values of strings from the \acl{dfg} of an analyzed program. We provide a proof of concept implementation as an extension of an existing \acl{cpg} implementation used for static analysis.
 
 We adapted part of an existing approach to obtain a \acl{srg} from the graph. We then convert this grammar into an automaton using an algorithm we adapted and extended for our use case.
 Further, this automaton is transformed into a regular expression, which describes the analyzed string. We use approximations of different precision to model the effects of concatenation and other operations on strings.
