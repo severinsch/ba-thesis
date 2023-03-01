@@ -402,9 +402,9 @@ We currently do not further analyze values stored in arrays but rather just inse
 This is due to the fact, that the \ac{cpg} does not contain \ac{dfg} edges to differentiate which field of an array is accessed in an array subscription expression like \lstinline|myArray[5]|.
 A more advanced analysis of arrays, that for example inserts data flow edges from an access to an array at index $i$ to a value that was stored at index $i$ earlier would enable better analysis of these values.
 
-We mostly focused on simple strings, but in general everything we described can be applied to string builders, string buffers and similar classes. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string.
+We mostly focused on simple strings, but in general everything we described can be applied to string builders, string buffers, string writers and similar classes. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string. Currently, however, the \ac{dfg} does not account for method calls on mutable objects. For example, for the mentioned \lstinline|sb.append| call, there is no \ac{dfg} edge to a subsequent reference of \lstinline|sb|, even though the append call changes the value reference by it. Therefore, the value change is not reflected by the \ac{dfg}, which makes extracting information hard. An approach to obtain this information could include collecting all method calls performed on such an object, ordering them using the evaluation order edges of the \ac{cpg} and then evaluating their effects in that order.
 
-As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach.
+As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach. For a fully functioning analysis, the other operations included in the Java standard library need to be supported.
 
 \subsection{State Elimination Heuristics}
 
