@@ -23,7 +23,7 @@ In the context of this thesis, $\Sigma$ is the set of characters making up the s
 To define grammars in examples, we use the notation $X \rightarrow Y$ to specify a production rule to transform some $X$ to some $Y$.
 We use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
-\acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
+\Acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
 Regular grammars are \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. A grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular, as the nonterminal is the last symbol in the first production but the first symbol in the latter.
 
 \section{Strongly Regular Grammars}\label{sec:background:srg}
@@ -67,14 +67,14 @@ In a character class consecutive characters can be abbreviated using \Verb@-@, e
 
 \section{Code Property Graph}\label{sec:background:cpg}
 A \acf{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements.
-While a \ac{cpg} is a general concept, we focus on one specific implementation\footnote{https://github.com/Fraunhofer-AISEC/cpg}, that extracts a \acf{cpg} out of source code of a set of different programming languages.
+While the \ac{cpg} is a general concept, we focus on one specific implementation\footnote{https://github.com/Fraunhofer-AISEC/cpg}, that extracts a \ac{cpg} out of source code of a set of different programming languages.
 
-There, nodes and edges have a list of key-value pairs called properties which contain general information for the element. For example, a node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order and data flow information by multiple passes \cite{cpg}. A pass iterates the graph in some way to enhance it with for example additional edges or other information.
+There, nodes and edges have a list of key-value pairs called properties which contain general information for the element. For example, a node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order and data flow information by multiple passes \cite{cpg}. A pass iterates the graph in some way to enhance it with, for example, additional edges or other information.
 Users of the library can extend its functionality by adding additional passes.
 
 While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis are data flow edges, which represent the data flow between different expressions.
 
-\begin{lstlisting}[label={lst:stringCreation}, caption={Example code}, captionpos=b]
+\begin{lstlisting}[label={lst:stringCreation}, caption={Example code}, captionpos=b, numbers=right]
 	String s = "xyz";
 	System.out.println(s);
 \end{lstlisting}

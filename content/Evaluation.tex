@@ -11,11 +11,11 @@ Afterwards, we measure execution times of the different steps, including grammar
 
 \subsection{Quality}\label{sec:eval:quality}
 
-We analyze the resulting regular expressions of two synthetic code examples, namely the "Tricky" example from Christensen et al. \cite{brics} and one custom example containing simple sanitization logic. We also analyze the results for the SQL Injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. We choose these examples due to the wide variety of complexity they offer. The Tricky example is specifically crafted to be complex, while the Juliet test cases are comparatively simple. The first therefore shows theoretical limitations of our approach, while the latter and the second example are closer to real word applications.
+We analyze the resulting regular expressions of two synthetic code examples, namely the "Tricky" example from Christensen et al. \cite{brics} and one custom example containing simple sanitization logic. We also analyze the results for the SQL injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. We choose these examples due to the wide variety of complexity they offer. The Tricky example is specifically crafted to be complex, while the Juliet test cases are comparatively simple. The first therefore shows theoretical limitations of our approach, while the latter and the second example are closer to real word applications.
 
 \subsubsection{Tricky}\label{sec:eval:quality:tricky}
 
-We adapted the \lstinline|Tricky| example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages can not count occurrences, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. A good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
+We adapted the \lstinline|Tricky| example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages can not count occurrences, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
 
 We create the grammar starting at the node representing the variable reference \lstinline|res| in line \ref{lst:tricky:sout}.
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
@@ -127,13 +127,13 @@ public class Tricky{
 
 \subsubsection{SQL query sanitization}
 
-Since the Tricky example is artificially complex, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to escape an SQL input.
+Since the Tricky example is artificially complex, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to sanitize an input for an SQL query.
 
 Note that the given code does not compile as \lstinline|Connection| is an interface and cannot be instantiated, but as this is not relevant for our analysis we ignore it for the sake of brevity.
 
-Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@ as a result. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
+Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@ as a result when analyzing the argument of the \lstinline|executeQuery| call. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
 
-The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ inserted for \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL-injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the risk compared to unfiltered input.
+The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ corresponding to the unknown \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the security risk compared to unfiltered input.
 
 \begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization code example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
 import java.sql.*;
@@ -161,17 +161,17 @@ public class DatabaseSanitization{
 
 The Juliet Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
 
-The test cases are grouped by the type of flaw, each corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry, they target. All 2224 test cases we analyzed target SQL-Injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
+The test cases are grouped by the type of flaw they target, each corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All 2224 test cases we analyzed target SQL injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
 
-The Juliet test cases can generally be grouped into ones using bad sinks, where a query string is vulnerable to an SQL-Injection and ones using good sinks, where prepared statements are correctly used. For the latter, the queries are just literal strings like \lstinline|"select * from users where name=?"|, where the replacement of the question mark with the desired parameter is internally handled by the SQL library.
+The Juliet test cases can generally be grouped into ones using bad sinks, where a query string is vulnerable to an SQL injection and ones using good sinks, where prepared statements are correctly used. For the latter, the queries are just literal strings like \lstinline|"select * from users where name=?"|, where the replacement of the question mark with the desired parameter is handled internally by the SQL library.
 
 The vulnerable test cases in the Juliet test suite build an SQL query similar to \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string. The actual semantics of the statements differ, but they all have the same structure where the value is injected as a parameter at the end of the query.
 
-The cases also differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library. Sometimes \lstinline|data| is unknown and sometimes a string constant. We are interested in the case, where the value of \lstinline|data| is unknown, as these cases pose security vulnerabilities.
+The cases also differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library. Sometimes \lstinline|data| is unknown and other times a string constant. We are interested in the case, where the value of \lstinline|data| is unknown, as these cases pose security vulnerabilities.
 
 For these cases, we obtain regular expressions similar to the example \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
 
-While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is clear that this result exposes a severe security risk, because any injection string could be inserted as a value for \lstinline|data|, signified by the wildcard pattern \Verb@.*@.
+While the interpretation and analysis of the obtained expressions is out of scope for this thesis, it is obvious that this result exposes a severe security risk, because any injection string could be inserted as a value for \lstinline|data|, signified by the wildcard pattern \Verb@.*@.
 
 \subsection{Performance}\label{sec:eval:peformance}
 
@@ -179,7 +179,7 @@ Further, we measured the execution time of the different steps in our analysis a
 We measure the steps separately to observe the relative differences between the steps and the effects of the optimizations we described. The total execution times naturally depend on the machine used to run the analysis. We used a common desktop computer\footnote{Intel i7-3770K (8 cores) @ 4.100GHz with 16 GB RAM running Arch Linux 6.1} for the benchmarks.
 As in the previous section we considered the two synthetic examples and the test cases of the Juliet test suite. 
 
-In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. The truncated mean is a common method to make the mean more robust, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This is done to eliminate the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling or caching. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
+In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This type of truncation is a common method to make the mean more robust, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This is done to eliminate the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling or caching. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input.
 
 \subsubsection{Tricky}
 
@@ -310,7 +310,7 @@ Due to the characteristics of this example, like a simpler data flow, the result
 
 \subsubsection{Juliet}
 
-We analyzed the execution time of each database related hotspot of all 2224 test cases in the Juliet test suite targeting SQL Injection vulnerabilities.
+We analyzed the execution time of each database related hotspot of all 2224 test cases in the Juliet test suite targeting SQL injection vulnerabilities.
 
 Figure \ref{fig:eval:plot:juliet} shows the averaged execution times of each step, again trimmed by 20\%.
 We can see, that the percentage of the total time spent on regex creation is lower compared to the plot for the Tricky example in Figure \ref{fig:eval:plot:tricky}, even without the intermediary \ac{dfa} step. This is due to the fact that the resulting automata for the Juliet test cases are very small, ranging from 2 to 4 states, compared to the 28 nodes of the Tricky \ac{nfa}.
@@ -380,7 +380,9 @@ This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which 
 
 Similar transformations could also be defined for more complex assertions like \lstinline|s.length() == 1|.
 
-However, as mentioned above, this is currently not possible because the \ac{cpg} is missing the required \ac{dfg} edges representing this implicit information flow from an assertion to subsequent variable usages.
+However, as mentioned above, this is currently not possible because the \ac{cpg} is missing the required \ac{dfg} edges representing this implicit information flow from an assertion to subsequent variable usages. 
+
+Christensen et al. implement a similar feature in their implementation.
 
 \begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, captionpos=b, float, numbers=right, escapechar=|]
 String s|\textcolor{red}{$^1$}| = getSomeKnownValue(); |\label{lst:assertions:def}|
@@ -392,7 +394,9 @@ System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
 
 \subsection{Polyvariance}\label{sec:futureWork:polyvariance}
 
-Polyvariance is an analysis strategy, where functions are analyzed more than once, usually once for every call site \cite{polyvariance}. The best result we currently obtain for the Tricky example is the regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@, that does not differentiate between \Verb@*@ and \Verb@+@. Using a polyvariant analysis could improve this, because the two calls to the \lstinline|bar| function would be analyzed separately with respect to their corresponding arguments. Currently, we only follow the \ac{dfg} edges, where the parameter of the function has one to each variable passed as this parameter, here \lstinline|+| and \lstinline|*|. These two edges are not differentiated and the same result is used for both calls to the function.
+Polyvariance is an analysis strategy, where functions are analyzed more than once, usually once for every call site \cite{polyvariance}. The best result we currently obtain for the Tricky example is the regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@, that does not differentiate between \Verb@*@ and \Verb@+@. Using a polyvariant analysis could improve this, because the two calls to the \lstinline|bar| function would be analyzed separately with respect to their corresponding arguments. 
+
+Currently, we only follow the \ac{dfg} edges, of which the parameter of the function has one to each variable passed as a parameter, here \lstinline|+| and \lstinline|*|. These two edges are not differentiated and the same result is used for both calls to the function.
 By differentiating between the corresponding arguments for the analysis of each call, we could sharpen the result to \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@.
 
 \subsection{More extensive implementation}
@@ -402,15 +406,17 @@ We currently do not further analyze values stored in arrays but rather just inse
 This is due to the fact, that the \ac{cpg} does not contain \ac{dfg} edges to differentiate which field of an array is accessed in an array subscription expression like \lstinline|myArray[5]|.
 A more advanced analysis of arrays, that for example inserts data flow edges from an access to an array at index $i$ to a value that was stored at index $i$ earlier would enable better analysis of these values.
 
-We mostly focused on simple strings, but in general everything we described can be applied to string builders, string buffers, string writers and similar classes. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string. Currently, however, the \ac{dfg} does not account for method calls on mutable objects. For example, for the mentioned \lstinline|sb.append| call, there is no \ac{dfg} edge to a subsequent reference of \lstinline|sb|, even though the append call changes the value reference by it. Therefore, the value change is not reflected by the \ac{dfg}, which makes extracting information hard. An approach to obtain this information could include collecting all method calls performed on such an object, ordering them using the evaluation order edges of the \ac{cpg} and then evaluating their effects in that order.
+We mostly focused on simple strings, but in general everything we described can be applied to string builders, string buffers, string writers and similar classes. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string. 
+
+Currently, however, the \ac{dfg} does not account for method calls on mutable objects. For example, for the mentioned \lstinline|sb.append| call, there is no \ac{dfg} edge to a subsequent reference of \lstinline|sb|, even though the append call changes the value referenced by it. Therefore, the value change is not reflected by the \ac{dfg}, which makes extracting information hard. An approach to obtain this information could include collecting all method calls performed on such an object, ordering them using the evaluation order edges of the \ac{cpg} and then evaluating their effects in that order.
 
 As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach. For a fully functioning analysis, the other operations included in the Java standard library need to be supported.
 
 \subsection{State Elimination Heuristics}
 
-Moreira et al. analyzed and evaluated different existing and proposed new heuristics for choosing a good order to eliminate states during the state elimination algorithm \cite{moreira_heuristics}.
+Moreira et al. analyzed and evaluated different existing heuristics and proposed new strategies for choosing a good order to eliminate states during the state elimination algorithm \cite{moreira_heuristics}.
 
-While they conclude that the method by Delgado and Morais \cite{delgado} we use is similar to their newly proposed heuristics, they also note that the new strategies outperform Delgado's for small automata. Since the automata we handle are comparatively small, adapting our implementation to use one of the proposed new heuristic could improve the quality of the results.
+While they conclude that the method by Delgado and Morais \cite{delgado} we use is similar to their newly proposed heuristics, they also note that the new strategies outperform Delgado's for small automata. Since the automata we handle are comparatively small, adapting our implementation to use one of the proposed new heuristics could improve the quality of the results.
 
 Moreira et al. also observe that the strategy of taking the best result of using all three heuristics as a final result leads to a gain of 25\%. This approach of trying multiple strategies is also used by the powerful Vcsn platform for computations on finite state machines \cite{vcsn}.
 
@@ -425,7 +431,8 @@ Since \acp{dfa} are closed under intersection and complement, we can build the \
 Now we can check, whether $R$'s language is empty to determine, whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a word from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
 Additionally, we can check whether $M$ and $N$ are equivalent to determine, whether the query expression matches the computed result.
 
-Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned advanced query possibilities.
+We currently focus on producing human readable results in the form of regular expressions. For a fully automated analysis however, these advanced query possibilities could be leveraged to produce better feedback for users.
+Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned features.
 
 \begin{comment}
 \begin{itemize}
