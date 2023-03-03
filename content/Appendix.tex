@@ -1,0 +1,37 @@
+\chapter{Evaluation Results}\label{appendix:automaton}
+
+\subsubsection{Tricky NFA}
+\begin{figure}[ht!]
+	\centering
+	\includedot[scale=0.25]{dot/tricky_nfa}
+	\caption{NFA created from the Tricky example from Section \ref{sec:eval:quality:tricky}}
+	\label{fig:appendix:trickyNFA}
+\end{figure}
+
+\subsubsection{Tricky results}
+\begin{table}[ht]
+\renewcommand\arraystretch{1.5}
+\centering
+\begin{tabular}{cccp{8cm}}
+	\toprule
+	\thead{Method} & \thead{Automaton\\Size\\(states,\\transitions)} & \thead{Expression\\length} & \thead{Regular expression}
+	\\ \toprule
+	\makecell{NFA} & 28, 39 & 622 & \hfill\vspace{-2\baselineskip}
+	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
+((((\Q(\E)?(\Q(\E)*\Q(\E|\Q(\E))?((((((0|(-?[1-9][0-9]*)))(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))*((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))|(((0|(-?[1-9][0-9]*)))(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))(((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))*((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))|(\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))*(((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))*\Q)\E|\Q)\E)|((((0|(-?[1-9][0-9]*)))(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))((\Q)\E(\Q+\E|\Q*\E))(0|(-?[1-9][0-9]*)))*\Q)\E|(0|(-?[1-9][0-9]*))))
+	\end{Verbatim}
+	\\ \midrule
+	\makecell{DFA} & 6, 10 & 194 & \hfill\vspace{-2\baselineskip}
+	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
+(((\Q(\E(\Q(\E)*(0|(-?[1-9][0-9]*))|0|(-?[1-9][0-9]*))(\Q+\E|\Q*\E))(((0|(-?[1-9][0-9]*))\Q)\E)(\Q+\E|\Q*\E))*(((0|(-?[1-9][0-9]*))\Q)\E)))|((\Q(\E(\Q(\E)*(0|(-?[1-9][0-9]*))|0|(-?[1-9][0-9]*)))
+	\end{Verbatim}
+	\\ \midrule
+	\makecell{minimized\\DFA} & 4, 6 & 41 & \hfill\vspace{-2\baselineskip}
+	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
+((\Q(\E)*<int>((\Q*\E|\Q+\E)<int>\Q)\E)*)
+	\end{Verbatim}
+	\\ \bottomrule
+\end{tabular}
+\caption{Comparison of different approaches to obtain regular expression for Tricky example}
+\label{tab:trickyResults}
+\end{table}

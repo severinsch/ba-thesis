@@ -21,7 +21,7 @@ We create the grammar starting at the node representing the variable reference \
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
 Christensen et al. obtain a different grammar for this example. This difference stems from differences in the definition and implementation of the data flow graph.
 
-The \ac{nfa} created from the grammar contains 28 states and 40 transitions, of which 27 are $\epsilon$ transitions, and is too large to usefully be displayed in this thesis.
+The \ac{nfa} created from the grammar contains 28 states and 39 transitions, of which 27 are $\epsilon$ transitions, and can be seen in Figure \ref{fig:appendix:trickyNFA} of Appendix \ref{appendix:automaton}.
 The \acp{nfa} created using Nederhof's algorithm in general often have unnecessary states and transitions, like chains of states only connected by $\epsilon$ transitions.
 
 Christensen et al. describe the language they obtained with the expression \Verb|\(*<int>([+*]<int>\))*| \cite{brics}. Note that Christensen et al. only create automata and not regular expressions, so this expression is just to describe their created automaton. How their automaton compares to ours is unclear, as they only share this description of the language. We still use  their short regular expression as a comparison for our results, both for correctness of the language we accept and size of the expressions.
@@ -41,7 +41,7 @@ Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an e
 Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which our implementation transforms to the even shorter regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@. In essence, this is equivalent to the description by Christensen et al. we mentioned earlier.
 Therefore, when using some optimizations, our approach produces very short, human-readable regular expressions even for complex inputs.
 
-The regular expressions mentioned here all accept the same language and just differ in their length and complexity. 
+The regular expressions mentioned here all accept the same language and just differ in their length and complexity. An overview of the different results can be seen in Table \ref{tab:trickyResults}.
 
 Note, that neither our nor Christensen et al.'s result does account for the fact, that in the strings generated in the Tricky example all occurrences of \lstinline|*| are before the first occurrence of \lstinline|+|. This is a shortcoming compared to the manually created regular expression mentioned at the beginning of this section.
 As Christensen et al. mention, this improvement could be achieved by distinguishing the two calls to the \lstinline|bar| method using a polyvariant analysis \cite{brics}, which is explained further in Section \ref{sec:futureWork:polyvariance}.
@@ -348,13 +348,34 @@ Also note that the relative execution times of the different steps are fairly co
 	\label{fig:eval:plot:juliet}
 \end{figure}
 
-\section{Discussion and Future work}
+\section{Discussion}
 
-We discuss several limitations of our implementation and present potential approaches, how future work can mitigate these limitations and extend our implementation.
+We discuss limitations of our methodology concerning the examples we chose for evaluating our implementation.
 
 \subsection{Examples}
 
 We have to note, that all examples we used to test our implementation are synthetic examples. This is due to the fact, that we currently only support a small subset of the Java language, which is not enough to obtain meaningful results from real code. It is unclear how closely the used examples resemble most actual application code and to what extent the observations we made can be transferred to real world use.
+
+However, looking at recent vulnerability reports in the form of CVEs\footnote{https://www.cve.org/} suggests, that comparatively simple SQL injection vulnerabilities still occur in real applications. For example, consider the entry CVE-2022-45932\footnote{https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-45932} for a vulnerability in the OpenDaylight\footnote{https://www.opendaylight.org/} project.
+Listing \ref{lst:opendaylight:vulnerable} shows an excerpt of the vulnerable code, where the \lstinline|deleteRole| handles a call to an API endpoint and \lstinline|roleid| is user input. Here this user input is insufficiently escaped using an HTML escapement utility provided by Apache, that effectively replaces all characters that cannot by displayed in plain HTML. The single quote character however is not changed by this escapement, which allows e.g. the malicious \lstinline|"' or 1=1--| as a value of \lstinline|escaped|. 
+
+This code has striking similarities to our synthetic example from Listing \ref{lst:sqlSanit}, as malicious user input is (insufficiently) sanitized and naively inserted into the query. As we demonstrated our implementation can provide useful information for vulnerabilities of this complexity. This suggests, that the approach can be viable for real world applications when extended to support the complete Java standard library.
+
+\begin{lstlisting}[label={lst:opendaylight:vulnerable}, caption={Adapted excerpt from vulnerable code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
+Role deleteRole(String roleid){
+	String escaped = StringEscapeUtils.escapeHtml4(roleid);
+	String query = 
+		String.format(
+			"DELETE FROM "+TABLE+" WHERE "+COL_ID+" = '%s'", 
+			escaped
+		);
+	stmt.executeUpdate(query);
+}       
+\end{lstlisting}
+
+\section{Future Work}
+
+We discuss several limitations of our implementation and present potential approaches, how future work can mitigate these limitations and extend our implementation.
 
 \subsection{Assertions}
 

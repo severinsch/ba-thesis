@@ -20,7 +20,7 @@ giveninits,
 uniquename=init]{biblatex}
 \bibliography{bachelor_thesis}
 % \addbibresource{bachelor_thesis.bib}
-\usepackage{graphicx}
+\usepackage[pdftex]{graphicx}
 \usepackage{scrhack} % necessary for listings package
 \usepackage{listings}
 \usepackage{lstautogobble}
@@ -53,6 +53,7 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 %\usepackage{titlesec}
 \usepackage{dsfont} %math symbols
 \usepackage{tabularx}
+\usepackage{makecell}
 \usepackage{subcaption}
 \usepackage{picture}
 
@@ -64,13 +65,16 @@ plainpages = false, hypertexnames = false, citecolor = black] {hyperref}
 \usepackage{algorithm} %wrap algpseudocode and enrich with label etc.
 %\usepackage{float} % for [H] after floats
 %\usepackage{floatflt}
-\usepackage{verbatim}
+%\usepackage{verbatim}
 \usepackage{xparse}
-\usepackage{fancyvrb}
+%\usepackage{fancyvrb}
 \usepackage{fvextra}
 \usetikzlibrary{arrows,automata}
 \usetikzlibrary{positioning}
 \usetikzlibrary{calc}
+%\usepackage[pdftex]{graphicx}
+\usepackage{graphviz}
+\usepackage{comment}
 
 %\usepackage{subfig}
 
@@ -234,17 +238,22 @@ M\"unchen, \submission\\\\\\\\\\\\
 
 \input {content/Conclusion.tex}
 
-% \appendix % If you need an appendix
+\appendix % If you need an appendix
+
+\input {content/Appendix.tex}
 
 \end{spacing}
+
 
  % TODO: remove if glossary not needed
 %\glsaddall{} % add all defined terms to glossary, even if not referenced in text
 %\printglossaries{}
 
 %\microtypesetup{protrusion=false}
-%\listoffigures{}
-%\listoftables{}
+\setcounter{tocdepth}{1}
+\listoffigures{}
+\setcounter{tocdepth}{1}
+\listoftables{}
 %\microtypesetup{protrusion=true}
 \printbibliography{}
 

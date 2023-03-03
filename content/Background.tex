@@ -12,19 +12,22 @@ look it up (or on google).
 Probably approx. 3-10 pages
 \end{comment}
 
-We first provide some background information and notation for formalisms used in the following chapters. This includes formal grammars in \ref{sec:background:grammars}, a specific type of grammar in \ref{sec:background:srg}, automata in \ref{sec:background:automata} and regular expressions in \ref{sec:background:regex}. In \ref{sec:background:cpg}, we then describe the code property graph we use.
+We first provide some background information and notation for formalisms used in the following chapters. This includes formal grammars in \ref{sec:background:grammars}, a specific type of grammar we use in \ref{sec:background:srg}, finite automata in \ref{sec:background:automata} and regular expressions in \ref{sec:background:regex}. In \ref{sec:background:cpg}, we then describe the code property graph we use.
 
 \section{Formal Grammars}\label{sec:background:grammars}
 
 A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start nonterminal.
 
-In the context of this thesis, $\Sigma$ is the set of characters making up the strings of the analyzed programming language.
+In the context of this thesis, $\Sigma$ is the set of characters making up the strings of the analyzed programming language. In some places, we use regular expressions as terminals, which is an extension to the usual definition.
 
 To define grammars in examples, we use the notation $X \rightarrow Y$ to specify a production rule to transform some $X$ to some $Y$.
 We use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
-\Acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal.
-Regular grammars are \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. A grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular, as the nonterminal is the last symbol in the first production but the first symbol in the latter.
+\Acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal. The set of production rules for \acp{cfg} therefore is defined as $N \rightarrow (\Sigma \cup N)^*$ compared to the general definition above.
+
+Regular grammars are a subset of \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. 
+
+For example, a grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ therefore is not regular. Here, the nonterminal is the last symbol in the first production but the first symbol in the latter, which does not comply with the above rule.
 
 \section{Strongly Regular Grammars}\label{sec:background:srg}
 

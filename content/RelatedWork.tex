@@ -1,21 +1,16 @@
 \chapter{Related Work}
 \label{chapter:RelatedWork}
 
-The challenge of statically obtaining information about the values of strings is not new and over the years there have been different approaches to it.
+We present other work related to this thesis. We first discuss work related to the analysis of string properties in Section \ref{sec:related:stringproperty}, which is where our implementation fits in. Further, we present different approaches utilizing such methods for the specific application of detecting SQL injection vulnerabilities. Additionally, we present other techniques not closely related to the string properties for detecting such vulnerabilities.
+
+
+\section{String property analysis}\label{sec:related:stringproperty}
 
 Our approach partially follows the approach by Christensen et al. \cite{brics}. The authors construct a \acl{cfg} from a flow graph, but instead of creating it on-demand, starting at the chosen hotspot node like we do, they consider the total flow graph for grammar creation.
 As the total amount of potential hotspots can be far greater than the number of actual points of interest, this total grammar is potentially significantly larger than needed. This increased size reduces the performance of the subsequent steps.
 Christensen et al. use the same approximation methods for obtaining regular languages from the generated context free grammars, but instead of directly transforming these grammars into automata like we do, they produce a novel formalism, the \ac{mlfa}.
 This automaton allows the extraction of the respective automata for different hotspots. Due to the aforementioned on-demand generation of the grammar, we don't need the extraction capability for single hotspots that the \ac{mlfa} provides. In contrast to our implementation, Christensen et al. also don't transform the obtained automata to regular expressions, but rather provide query options using automata.
 The authors provide a feature rich implementation\footnote{https://www.brics.dk/JSA/} of their approach and show that it efficiently produces useful results.
-
-Gould et al. \cite{gould2004static} build on the work of Christensen et al. and use the obtained automata for further analysis of SQL queries. They use a context-free language reachability algorithm to validate the semantic correctness of SQL queries. For this analysis, they also include the grammar of the SQL language for scoping information and the database scheme for type checking.
-The authors show that their tool can precisely detect errors in in SQL queries. However they currently do not detect SQL injection vulnerabilities, but rather only assess the semantic correctness and type safety of the queries.
-
-Halfond and Orso also leverage the functionality provided by Christensen et al. to detect SQL injection vulnerabilities using the AMNESIA tool \cite{amnesia}. Their approach differs from the other mentioned works, as it is not a fully static analysis, but rather a static analysis used to enhance the capabilities of runtime monitoring. They use the implementation provided by Christensen et al. to build an SQL query model from the obtained automata. The model represents all of the possible SQL queries that can be generated at the analyzed hotspot.
-During runtime, the monitor can now check the dynamically generated queries against the existing query model. If a runtime query does not match the model, the monitor can reject the malicious query to prevent an SQL injection. The authors show in another publication, that their implementation of this dynamic approach can successfully prevent SQL injections in real world use cases without imposing considerable execution overhead on the application \cite{amnesia_evaluation}.
-
-As our approach is able to produce \acp{dfa} for the analyzed code as well, both of the previous approaches could theoretically be adapted to our implementation.
 
 Tabuchi et al. \cite{regex_types} describe a type system for a minimal functional calculus, where strings have a regular expression as their type. Using type inference and reconstruction algorithms, they assign such a type to each string variable. Properties about a variable can then be obtained from its type.
 They show that their proposed type system can produce good results when applied to their minimal calculus. While we considered adopting this approach for the analysis, there are some problems, especially due to our different requirements and prerequisites. 
@@ -28,4 +23,21 @@ Additionally this approach is tailored to the mentioned calculus and utilizes sp
 
 The additional layer of abstraction introduced by the \ac{dfg} used in the approach we chose eliminates this problem and makes adaption easier.
 
+\section{String property analysis used for SQL injection vulnerability detection}
+
+Gould et al. \cite{gould2004static} build on the work of Christensen et al. and use the obtained automata for further analysis of SQL queries. They use a context-free language reachability algorithm to validate the semantic correctness of SQL queries. For this analysis, they also include the grammar of the SQL language for scoping information and the database scheme for type checking.
+The authors show that their tool can precisely detect errors in SQL queries. However they currently do not detect SQL injection vulnerabilities, but rather only assess the semantic correctness and type safety of the queries.
+
+Halfond and Orso also leverage the functionality provided by Christensen et al. to detect SQL injection vulnerabilities using the AMNESIA tool \cite{amnesia}. Their approach differs from the other mentioned works, as it is not a fully static analysis, but rather a static analysis used to enhance the capabilities of runtime monitoring. They use the implementation provided by Christensen et al. to build an SQL query model from the obtained automata. The model represents all of the possible SQL queries that can be generated at the analyzed hotspot.
+During runtime, the monitor can now check the dynamically generated queries against the existing query model. If a runtime query does not match the model, the monitor can reject the malicious query to prevent an SQL injection. The authors show in another publication, that their implementation of this dynamic approach can successfully prevent SQL injections in real world use cases without imposing considerable execution overhead on the application \cite{amnesia_evaluation}.
+
+As our approach is able to produce \acp{dfa} for the analyzed code as well, both of the previous approaches could theoretically be adapted to our implementation.
+
 Wassermann and Su \cite{sqli_wassermann_su} present an approach comparable to ours, where they also characterize values of string variables using context free grammars. They specifically target SQL injection vulnerabilities by using the generated \acp{cfg} to check whether user input can change the syntactic structure of a query. While this approach is successful in detecting those vulnerabilities, our approach is more general and not focused on detecting one specific type of problem, but rather on providing general information for unspecified further use.
+
+\section{Other approaches for SQL injection vulnerability detection}
+
+Livshits and Lam present an approach for vulnerability detection based on taint propagation \cite{livshits2005}.
+Taint propagation involves finding all sinks derivable from sources via some given derivation rules. For the vulnerability detection for example a function that extracts some user input from a request is a source, while an SQL query execution function is a sink. A sink is flagged as potentially vulnerable if it is derivable from a potentially malicious source via some set of derivation rules. As the different sinks, sources and derivation rules for a specific vulnerability need to be provided by the user of their tool, they provide a user friendly way using \ac{pql} to specify vulnerability patterns. The authors show that their approach successfully detects security vulnerabilities in real world application.
+
+
