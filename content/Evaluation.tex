@@ -15,7 +15,7 @@ We analyze the resulting regular expressions of two synthetic code examples, nam
 
 \subsubsection{Tricky}\label{sec:eval:quality:tricky}
 
-We adapted the \lstinline|Tricky| example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages can not count occurrences, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
+We adapted the \lstinline|Tricky| example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages cannot count occurrences, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
 
 We create the grammar starting at the node representing the variable reference \lstinline|res| in line \ref{lst:tricky:sout}.
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
