@@ -85,7 +85,7 @@ Our grammar contains the following types of productions:
 
 Here, \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and "$op$" is a placeholder for a string operation that is applied to some arguments.
 
-\begin{lstlisting}[label={lst:grammar_example}, caption={Example code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
+\begin{lstlisting}[label={lst:grammar_example}, caption={Grammar creation example code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
 	String s(*\textcolor{red}{$^1$}*) = " foo";
 	s(*\textcolor{red}{$^2$}*) = s(*\textcolor{red}{$^3$}*) + "bar";
 	s(*\textcolor{red}{$^4$}*) = s(*\textcolor{red}{$^5$}*).trim();

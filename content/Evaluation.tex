@@ -135,7 +135,7 @@ Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@
 
 The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ corresponding to the unknown \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the security risk compared to unfiltered input.
 
-\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization code example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
 import java.sql.*;
 public class DatabaseSanitization{
 	public static void main(String[] args) throws SQLException {
