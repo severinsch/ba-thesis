@@ -16,12 +16,12 @@ We first provide some background information and notation for formalisms used in
 
 \section{Formal Grammars}\label{sec:background:grammars}
 
-A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just "productions" and a start nonterminal.
+A formal grammar consists of a set of nonterminal symbols $N$, an alphabet $\Sigma$ of terminal symbols, a set of production rules $(\Sigma \cup N)^*N(\Sigma \cup N)^* \rightarrow (\Sigma \cup N)^*$, also called just \enquote{productions} and a start nonterminal.
 
 In the context of this thesis, $\Sigma$ is the set of characters making up the strings of the analyzed programming language. In some places, we use regular expressions as terminals, which is an extension to the usual definition.
 
 To define grammars in examples, we use the notation $X \rightarrow Y$ to specify a production rule to transform some $X$ to some $Y$.
-We use capital letters for nonterminals and lower case letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
+We use capital letters for nonterminals and lowercase letters for terminals. We also don't specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
 \Acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal. The set of production rules for \acp{cfg} therefore is defined as $N \rightarrow (\Sigma \cup N)^*$ compared to the general definition above.
 
@@ -92,7 +92,7 @@ Consider the short code example in Listing \ref{lst:stringCreation}. Here, among
 
 In this example, the data flows from the \lstinline|Literal| node to the \lstinline|VariableDeclaration| and from there to the \lstinline|DeclaredReferenceExpression|.
 
-The nodes connected by those egdes effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
+The nodes connected by those edges effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
 
 % TODO mention definition for DFG in CPG repo
 
