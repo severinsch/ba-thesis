@@ -181,16 +181,7 @@ As in the previous section we considered the two synthetic examples and the test
 
 In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This type of truncation is a common method to increase the robustness of the mean, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This method eliminates the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling, caching or other unknown influences. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input. Such outliers would skew our measurements and therefore are disregarded for the analysis.
 
-\subsubsection{Tricky}
-
-Consider the Figures \ref{fig:eval:plot:tricky} and \ref{fig:eval:plot:trickyDFA}. 
-The plots show the durations of each step in the process from \ac{cpg} to regular expression. 
-In the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
-
-For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
-
-
-\begin{figure}
+\begin{figure}[H]
 	\captionbox{Durations of Tricky example in $\mu s$\label{fig:eval:plot:tricky}}{
 		\pgfplotsset{stackedBar/.style={
 				title=Tricky,
@@ -243,6 +234,14 @@ For both plots we averaged the measurements of 100 runs after we trimmed the hig
 		\end{tikzpicture}
 	}
 \end{figure}
+
+\subsubsection{Tricky}
+
+Consider the Figures \ref{fig:eval:plot:tricky} and \ref{fig:eval:plot:trickyDFA}. 
+The plots show the durations of each step in the process from \ac{cpg} to regular expression. 
+In the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
+
+For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
 
 \subsubsection{SQL query sanitization}
 
@@ -348,11 +347,7 @@ Also note that the relative execution times of the different steps are fairly co
 	\label{fig:eval:plot:juliet}
 \end{figure}
 
-\section{Discussion}
-
-We discuss limitations of our methodology concerning the examples we chose for evaluating our implementation.
-
-\subsection{Examples}
+\section{Limitations of the evaluation}
 
 We have to note that all examples we used to test our implementation are synthetic examples. This is due to the fact that we currently only support a small subset of the Java language, which is not enough to obtain meaningful results from real code. It is unclear how closely the used examples resemble most actual application code and to what extent the observations we made can be transferred to real world use.
 
@@ -383,6 +378,14 @@ Our implementation currently does not try to evaluate assertions like \lstinline
 
 Consider the example in Listing \ref{lst:assertions} where \lstinline|getSomeKnownValue()| returns some value we can analyze, which is henceforth abbreviated with the generic \lstinline|<val>|.
 
+\begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, captionpos=b, numbers=right, escapechar=|]
+	String s|\textcolor{red}{$^1$}| = getSomeKnownValue(); |\label{lst:assertions:def}|
+	if(s|\textcolor{red}{$^2$}|.isEmpty()){ |\label{lst:assertions:condition}|
+		s|\textcolor{red}{$^4$}| = s|\textcolor{red}{$^3$}| + "empty"; |\label{lst:assertions:ifbody}|
+	}
+	System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
+\end{lstlisting}
+
 In our \ac{cpg} the only incoming \ac{dfg} edge of \lstinline|s|$^3$ in line \ref{lst:assertions:ifbody} is an edge from \lstinline|s|$^1$ in line \ref{lst:assertions:def}. However, there is an implicit information flow from \lstinline|s|$^2$ in line \ref{lst:assertions:condition} to \lstinline|s|$^3$, as the result of applying the \lstinline|isEmpty| operation on \lstinline|s|$^2$ influences the information we can get about \lstinline|s|$^3$. If there was a \ac{dfg} edge to the \lstinline|s|$^2$\lstinline|.isEmpty()| call from \lstinline|s|$^3$ instead of the edge from \lstinline|s|$^1$, we could include the operation in our analysis.
 
 For example, for such an edge, we could add a new type of production comparable to the existing operation productions, from the nonterminal representing \lstinline|s|$^3$ to the one representing \lstinline|s|$^2$.
@@ -404,14 +407,6 @@ Similar transformations could also be defined for more complex assertions like \
 However, as mentioned above, this is currently not possible because the \ac{cpg} is missing the required \ac{dfg} edges representing this implicit information flow from an assertion to subsequent variable usages. 
 
 Christensen et al. implement a similar feature in their implementation.
-
-\begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, captionpos=b, float, numbers=right, escapechar=|]
-String s|\textcolor{red}{$^1$}| = getSomeKnownValue(); |\label{lst:assertions:def}|
-if(s|\textcolor{red}{$^2$}|.isEmpty()){ |\label{lst:assertions:condition}|
-	s|\textcolor{red}{$^4$}| = s|\textcolor{red}{$^3$}| + "empty"; |\label{lst:assertions:ifbody}|
-}
-System.out.println(s|\textcolor{red}{$^5$}|); |\label{lst:assertions:sout}|
-\end{lstlisting}
 
 \subsection{Polyvariance}\label{sec:futureWork:polyvariance}
 

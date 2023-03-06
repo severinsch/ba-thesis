@@ -53,35 +53,37 @@ Another comparable approach by Halfond et al. uses positive tainting \cite{wasp}
 
 \section{Overview}
 
-In Table \ref{tab:relatedWorkComparison} we provide an overview of the presented approaches and their respective differences. Here JSA is used as an abbreviation for the approach by Christensen et al., DB for database and PoC for proof of concept. Generally the presented work can be categorized into two groups, with generic approaches that aim to provide information and capabilities for different analyses building on them (\cite{brics,banshee,regex_types}) on the one hand side. The other publications try to solve specific problems like preventing SQL injection attacks, sometimes using the aforementioned analysis techniques as a foundation (\cite{gould2004static,amnesia,wasp,xduce,xact,livshits2005,sqli_wassermann_su}). Our work could be categorized into the first group.
+In Table \ref{tab:relatedWorkComparison} we provide an overview of the presented approaches and their respective differences. Here JSA is used as an abbreviation for \enquote{Java String Analyzer}, the implementation of their approach by Christensen et al., DB for database and PoC for proof of concept. Generally the presented work can be categorized into two groups, with generic approaches that aim to provide information and capabilities for different analyses building on them (\cite{brics,banshee,regex_types}) on the one hand side. The other publications try to solve specific problems like preventing SQL injection attacks, sometimes using the aforementioned analysis techniques as a foundation (\cite{gould2004static,amnesia,wasp,xduce,xact,livshits2005,sqli_wassermann_su}). Our work could be categorized into the first group.
 
+% TODO abkürzung in footnotes?
 \begin{table}[H]
 	\centering
+	\small
 	\begin{tabular}{cccc}
 		\toprule
-		\thead{publication} & \thead{purpose} & \thead{approach} & \thead{provides\\implementation} \\
+		\thead{\textbf{Publication}} & 	\thead{\textbf{Purpose}} & 	\thead{\textbf{Approach}} & \thead{\textbf{Provides}\\\textbf{implementation}} \\
 		\midrule
-		\makecell{\cite{brics}} & \makecell{provide general information} & \makecell{JSA} & \makecell{\checkmark} \\
+		\makecell{Christensen et al. \cite{brics}} & \makecell{provide general\\information} & \makecell{Java String Analyzer\\(JSA)} & \makecell{\checkmark} \\
 		\midrule
-		\makecell{\cite{regex_types}} & \makecell{provide general information} & \makecell{regex type system} & \makecell{} \\
+		\makecell{Tabuchi et al. \cite{regex_types}} & \makecell{provide general\\information} & \makecell{regular expression\\type system} & \makecell{} \\
 		\midrule
-		\makecell{this thesis} & \makecell{provide general information} & \makecell{adaption of JSA,\\Nederhof Alg., state elim.} & \makecell{PoC} \\
+		\makecell{This thesis} & \makecell{provide general\\information} & \makecell{adaption of JSA,\\Nederhof Algorithm,\\state elimination} & \makecell{PoC} \\
 		\midrule
-		\makecell{\cite{xact}} & \makecell{validate\\XML transformation} & \makecell{simple static string analysis} & \makecell{\checkmark}\\
+		\makecell{Kirkegaar et al. \cite{xact}} & \makecell{validate XML\\transformation} & \makecell{simple static\\string analysis} & \makecell{\checkmark}\\
 		\midrule
-		\makecell{\cite{xduce}} & \makecell{validate\\XML transformation} & \makecell{regex type system} & \makecell{\checkmark}\\
+		\makecell{Hosoya \& Pierce \cite{xduce}} & \makecell{validate XML\\transformation} & \makecell{regular expression\\type system} & \makecell{\checkmark}\\
 		\midrule
-		\makecell{\cite{banshee}} & \makecell{toolkit for building\\different analyses} & \makecell{set constraint resolution} & \makecell{\checkmark} \\
+		\makecell{Kodumal \& Aiken \cite{banshee}} & \makecell{toolkit for building\\different analyses} & \makecell{set constraint resolution} & \makecell{\checkmark} \\
 		\midrule
-		\makecell{\cite{gould2004static}} & \makecell{statically verify\\SQL queries} & \makecell{JSA \& \ac{cfl} reachability\\with DB information} & \makecell{prototype} \\
+		\makecell{Gould et al. \cite{gould2004static}} & \makecell{statically verify\\SQL queries} & \makecell{JSA \& \ac{cfl} reachability\\with DB information} & \makecell{prototype} \\
 		\midrule
-		\makecell{\cite{amnesia_evaluation, amnesia}} & \makecell{prevent SQL injection\\attacks} & \makecell{JSA \& runtime monitoring} & \makecell{\checkmark} \\
+		\makecell{Halfond \& Orso \cite{amnesia_evaluation, amnesia}} & \makecell{prevent SQL\\injection attacks} & \makecell{JSA \& runtime\\monitoring} & \makecell{\checkmark} \\
 		\midrule
-		\makecell{\cite{sqli_wassermann_su}} & \makecell{prevent SQL injection\\attacks} & \makecell{CFG based,\\detect changes to\\structure of SQL query} & \makecell{prototype} \\
+		\makecell{Wassermann \& Su \cite{sqli_wassermann_su}} & \makecell{prevent SQL\\injection attacks} & \makecell{\ac{cfg} based,\\detect changes to\\structure of SQL query} & \makecell{prototype} \\
 		\midrule
-		\makecell{\cite{livshits2005}} & \makecell{prevent SQL injection\\attacks} & \makecell{static taint analysis,\\points-to analysis} & \makecell{\checkmark} \\
+		\makecell{Livshits \& Lam \cite{livshits2005}} & \makecell{prevent SQL\\injection attacks} & \makecell{static taint analysis,\\points-to analysis} & \makecell{\checkmark} \\
 		\midrule
-		\makecell{\cite{wasp}} & \makecell{prevent SQL injection\\attacks} & \makecell{positive taint analysis} & \makecell{\checkmark} \\
+		\makecell{Halfond et al. \cite{wasp}} & \makecell{prevent SQL\\injection attacks} & \makecell{positive taint analysis} & \makecell{\checkmark} \\
 		\bottomrule
 	\end{tabular}
 	\caption{Comparison of the presented related work}

@@ -7,7 +7,10 @@
 \noindent
 
 
-As more and more aspects of our daily lives move online, the security of online data becomes increasingly important. SQL injections are among the most common threats to online security, and detecting potential vulnerabilities in source code is crucial to preventing such attacks. To successfully detect such vulnerabilities in source code, static analysis tools need information about the strings from which the queries are built.
+As more and more aspects of our daily lives move online, the security of online data becomes increasingly important. Injections \textendash{} the insertion of unwanted strings \textendash{} are among the most common threats to online security. Detecting potential injection vulnerabilities in source code is crucial to preventing this type of attacks. Static analysis tools used for this detection can benefit from precise information about the values of potentially vulnerable strings.
 
-In this thesis, we adapt an approach to extract formal grammars that describe strings from a code property graph. We combine this approach with other techniques to obtain a human readable regular expression, matching all possible values of the analyzed string.
+In this thesis, we adapt an approach by Christensen et al. to extract formal grammars that describe strings from a code property graph. 
+We approximate this grammar to a strongly regular grammar and create a human readable regular expression from it using Nederhof's algorithm and the state elimination strategy.
+This regular expression describes properties of the values the analyzed string can take on and matches all such values.
 We provide a proof-of-concept implementation and show that it is able to accurately describe complex strings. We think that with further development, the information our approach provides can be used to successfully detect SQL injection vulnerabilities.
+% TODO string properties erklären, motivierender Teil allgemeiner, ansätze benennen
