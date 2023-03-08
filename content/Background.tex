@@ -12,7 +12,7 @@ look it up (or on google).
 Probably approx. 3-10 pages
 \end{comment}
 
-We first provide some background information and notation for formalisms used in the following chapters. This includes formal grammars in \ref{sec:background:grammars}, a specific type of grammar we use in \ref{sec:background:srg}, finite automata in \ref{sec:background:automata} and regular expressions in \ref{sec:background:regex}. In \ref{sec:background:cpg}, we then describe the code property graph we use.
+We first provide some background information and notation for formalisms used in the following chapters. This includes formal grammars in Section \ref{sec:background:grammars}, strongly regular grammars in Section \ref{sec:background:srg}, finite automata in Section \ref{sec:background:automata} and regular expressions in Section \ref{sec:background:regex}. In Section \ref{sec:background:cpg}, we then describe the code property graph we use.
 
 \section{Formal Grammars}\label{sec:background:grammars}
 
@@ -54,16 +54,30 @@ An edge in this graph, henceforth also called transition, is denoted as $(q_1, a
 
 \section{Regular Expressions}\label{sec:background:regex}
 
-We use a regular expression syntax with the following metacharacters from the Java regular expression flavor:
+We use a regular expression syntax with metacharacters from the Java regular expression flavor, which can be seen in Table \ref{tab:regex}.
 
-\begin{itemize}
-	\item \Verb@*@: Kleene star. Matches the previous character zero or more times.
-	\item \Verb@.@: Wildcard. Matches any character.
-	\item \Verb@?@: Option. Matches the previous character zero or one time.
-	\item \Verb@|@: Choice. Matches either the previous or the following expression.
-	\item \Verb@[abc]@: Character class. Matches any of the contained characters (here \Verb@a@, \Verb@b@ and \Verb@c@).
-	\item \Verb@[^abc]@: Negative character class. Matches any character not contained (here anything except \Verb@a@, \Verb@b@ and \Verb@c@).
-\end{itemize}
+\begin{table}
+	\centering
+	\begin{tabular}{ccc}
+			\toprule
+		\thead{\textbf{Metacharacter}} & \thead{\textbf{Name}} & \thead{\textbf{Description}} \\
+			\midrule
+		\makecell{\Verb@*@} & \makecell{Kleene star} & \makecell{Matches the previous character\\zero or more times}\\
+			\midrule
+		\makecell{\Verb@.@} & \makecell{Wildcard} & \makecell{Matches any character}\\
+			\midrule
+		\makecell{\Verb@?@} & \makecell{Option} & \makecell{Matches the previous character\\zero or one time}\\
+			\midrule
+		\makecell{\Verb@|@} & \makecell{Choice} & \makecell{Matches either the previous or the\\following expression}\\
+			\midrule
+		\makecell{\Verb@[abc]@} & \makecell{Character class} & \makecell{Matches any of the contained characters\\(here \Verb@a@, \Verb@b@ and \Verb@c@)}\\
+			\midrule
+		\makecell{\Verb@[^abc]@} & \makecell{Negative character class} & \makecell{Matches any character not contained\\(here anything except \Verb@a@, \Verb@b@ and \Verb@c@)}\\
+		\bottomrule
+	\end{tabular}
+	\caption{The regular expression metacharacters we use}
+	\label{tab:regex}
+\end{table}
 
 Expressions are grouped using round brackets and meta characters escaped using single backslashes.
 In a character class consecutive characters can be abbreviated using \Verb@-@, e.g. \Verb@[0-9]@ to match any digit.
@@ -75,7 +89,7 @@ While the \ac{cpg} is a general concept, we focus on one specific implementation
 There, nodes and edges have a list of key-value pairs called properties which contain general information for the element. For example, a node representing a statement in a source file contains the location of the underlying code and an edge representing evaluation order may contain whether the target statement is unreachable. The graph is initially created by language frontends, which create partially connected \acp{ast}, which are then enriched by additional information like the mentioned evaluation order and data flow information by multiple passes \cite{cpg}. A pass iterates the graph in some way to enhance it with, for example, additional edges or other information.
 Users of the library can extend its functionality by adding additional passes.
 
-While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis are data flow edges, which represent the data flow between different expressions.
+While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis is data flow edges, which represent the data flow between different expressions.
 
 \begin{lstlisting}[label={lst:stringCreation}, caption={\ac{cpg} example code}, captionpos=b, numbers=right]
 	String s = "xyz";
@@ -93,7 +107,5 @@ Consider the short code example in Listing \ref{lst:stringCreation}. Here, among
 In this example, the data flows from the \lstinline|Literal| node to the \lstinline|VariableDeclaration| and from there to the \lstinline|DeclaredReferenceExpression|.
 
 The nodes connected by those edges effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
-
-% TODO mention definition for DFG in CPG repo
 
 

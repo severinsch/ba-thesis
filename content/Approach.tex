@@ -1,6 +1,8 @@
 \chapter{Approach and Implementation}
 \label{chapter:Approach}
 
+We first provide a general overview of our approach before explaining the different steps.
+% TODO satz verbessern
 
 \section{General Approach}
 
@@ -75,23 +77,34 @@ To create the grammar for a given \ac{cpg} node, we traverse the \ac{dfg} backwa
 % The starting node can be one of the hotspot nodes collected by the aforementioned \lstinline|Pass|, but in general the grammar creation is independent of the hotspot collection.
 For each visited node, we add a \lstinline|Nonterminal| and the fitting productions to our grammar. 
 
-Our grammar contains the following types of productions:
-\begin{itemize}
-	\item \lstinline|UnitProduction|:  $X \rightarrow Y$, for references between nodes
-	\item \lstinline|ConcatProduction|: $X \rightarrow Y\ Z$, for concatenation of two nodes
-	\item \lstinline|TerminalProduction|: $X \rightarrow \texttt{<terminal>}$, for literal string values and other terminal symbols
-	\item \lstinline|OperationProduction|: $X \rightarrow op(Y)$, for operations on strings
-\end{itemize}
+The different types of productions we use can be seen in Table \ref{tab:productions}, where \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and \enquote{$op$} is a placeholder for a string operation that is applied to some arguments.
 
-Here, \texttt{<terminal>} represents a terminal symbol containing a regular expression that describes a string value and \enquote{$op$} is a placeholder for a string operation that is applied to some arguments.
+\begin{table}[H]
+	\centering
+	\begin{tabular}{ccc}
+		\toprule
+		\thead{\textbf{Name}} & \thead{\textbf{Production}} & \thead{\textbf{Usage}} \\
+		\midrule
+		\makecell{\lstinline|UnitProduction|} & \makecell{$X \rightarrow Y$} & \makecell{references between nodes} \\
+				\midrule
+		\makecell{\lstinline|ConcatProduction|} & \makecell{ $X \rightarrow Y\ Z$} & \makecell{concatenation of two nodes} \\
+				\midrule
+		\makecell{\lstinline|TerminalProduction|} & \makecell{$X \rightarrow \texttt{<terminal>}$} & \makecell{literal string values and\\other terminal symbols} \\
+				\midrule
+		\makecell{\lstinline|OperationProduction|} & \makecell{$X \rightarrow op(Y)$} & \makecell{operations on strings} \\
+		\bottomrule
+	\end{tabular}
+	\caption{Production types we use}
+	\label{tab:productions}
+\end{table}
+
+Consider the code example in Listing \ref{lst:grammar_example} for the following explanations of the different productions.
 
 \begin{lstlisting}[label={lst:grammar_example}, caption={Grammar creation example code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
 	String s(*\textcolor{red}{$^1$}*) = " foo";
 	s(*\textcolor{red}{$^2$}*) = s(*\textcolor{red}{$^3$}*) + "bar";
 	s(*\textcolor{red}{$^4$}*) = s(*\textcolor{red}{$^5$}*).trim();
 \end{lstlisting}
-
-Consider the code example in Listing \ref{lst:grammar_example} for the following explanations of the different productions.
 
 \lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In Listing \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
 
@@ -125,7 +138,7 @@ To transform the created grammar into a regular expression, we need to approxima
 To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we first need to eliminate all cycles in our grammar that contain operation productions \cite{mohri_nederhof}.
 
 First, we view the grammar as a graph in which each symbol of the grammar corresponds to one graph node and for each production there are edges from the nonterminal on the left hand side to all symbols on the right hand side. 
-For two nonterminals $A$ and $B$ there is an edge from the node corresponding to $A$ to the one corresponding to $B$ iff there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
+For two nonterminals $A$ and $B$ there is an edge from the node corresponding to $A$ to the one corresponding to $B$ if and only if there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
 This graph allows us to group terminals that are reachable from each other by finding the \acp{scc} of the graph.
 
 All nonterminals are assigned a character set, containing all characters that make up the words in the language of the corresponding nonterminal.
@@ -198,7 +211,7 @@ The second, \lstinline|SigmaCharSet|, is used to easily represent sets like $\Si
 
 The behavior of the the set operations \lstinline|union| and \lstinline|intersect| can be described using the operations defined in Figure \ref{fig:setops}.
 
-\begin{figure}[H]
+\begin{figure}
 \noindent
 \begin{alignat*}{3}
 	& \text{\lstinline|SigmaCharSet union SigmaCharSet| } && \hat{=}\ (\Sigma \setminus A) \cup (\Sigma \setminus B) & &= \Sigma \setminus (A \cap B) \\
@@ -282,7 +295,7 @@ In the previous section, we obtained a \acl{srg}. This grammar is now converted 
 
 Nederhof describes an algorithm to transform an \ac{srg} into an equivalent $\epsilon$-\ac{nfa} \cite{nederhof}. The generated automaton always accepts the same language as the given grammar.
 
-The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac{nfa} $(K,\Sigma, \Delta, s, F)$ with states $K$, alphabet $\Sigma$, transitions $\Delta$, initial state $s$ and accepting states $F$ from a given \ac{srg} $(\Sigma, N, P, S)$ with alphabet $\Sigma$, nonterminals $N$, productions $P$ and a start nonterminal $S$.
+The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac{nfa} $(K,\Sigma, \Delta, s, F)$ with a set of states $K$, an alphabet $\Sigma$, a set of transitions $\Delta$, an initial state $s$ and a set of accepting states $F$ from a given \ac{srg} $(\Sigma, N, P, S)$ with an alphabet $\Sigma$, a set of nonterminals $N$,  a set of productions $P$ and a start nonterminal $S$.
 
 \begin{algorithm}[!h]
 	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
@@ -307,7 +320,6 @@ The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac
 		\For{$B \in N_i$}
 		\State $\mathbf{let}$ $q_B = \texttt{create\_state()};\ K = K \cup \{q_B\}$
 		\EndFor
-		% TODO define recursive
 		\If{$recursive(N_i) = left$}
 		\For{$(C \rightarrow X_1 ... X_m) \in P$ $\mathbf{such\ that}$ $C \in N_i \land X_1, ..., X_m \notin N_i$}
 		\State \Call{make\_fa}{$q_0,X_1 ... X_m,q_C$} \label{alg:left:firstrec}
