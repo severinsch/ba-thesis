@@ -7,15 +7,15 @@ We first evaluate our approach regarding the obtained results and its performanc
 
 In this section, we first analyze the quality of the results of our approach, e.g. concerning the length of the regular expression and whether it describes a correct language that contains all possible values of the analyzed variable in Section \ref{sec:eval:quality}. As a metric for the quality of the result we use the length of the regular expression, because shorter and more concise expressions are easier to read and understand for a human user.
 
-Afterwards, we measure execution times of the different steps, including grammar creation, character set and Mohri-Nederhof approximation and automaton and regex creation, in Section \ref{sec:eval:peformance}. We analyze the effects of different inputs and variations of our approach.
+Afterwards, we measure the execution times of the different steps, including grammar creation, character set and Mohri-Nederhof approximation and automaton and regex creation in Section \ref{sec:eval:peformance}. We analyze the effects of different inputs and variations of our approach.
 
 \subsection{Quality}\label{sec:eval:quality}
 
-We analyze the resulting regular expressions of two synthetic code examples, namely the \enquote{Tricky} example from Christensen et al. \cite{brics} and one custom example containing simple sanitization logic. We also analyze the results for the SQL injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. We choose these examples due to the wide variety of complexity they offer. The Tricky example is specifically crafted to be complex, while the Juliet test cases are comparatively simple. The first therefore shows theoretical limitations of our approach, while the latter and the second example are closer to real word applications.
+We analyze the resulting regular expressions for two synthetic code examples, namely the \enquote{Tricky} example from Christensen et al. \cite{brics} and one custom example containing simple sanitization logic. We also analyze the results for the SQL injection test cases of the Juliet test suite\footnote{https://samate.nist.gov/SARD/test-suites/111}. We choose these examples due to the wide variety of complexity they offer. The Tricky example is specifically crafted to be complex, while the Juliet test cases are comparatively simple. The first therefore shows theoretical limitations of our approach, while the latter and the second example are closer to real word applications. Whether these examples are representative of real world applications is discussed in Section \ref{sec:discussion:limitations}.
 
 \subsubsection{Tricky}\label{sec:eval:quality:tricky}
 
-We adapted the \lstinline|Tricky| example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages cannot count the occurrences of characters, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
+We adapted the \enquote{Tricky} example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages cannot count the occurrences of characters, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
 
 We create the grammar starting at the node representing the variable reference \lstinline|res| in line \ref{lst:tricky:sout}.
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
@@ -41,7 +41,7 @@ Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an e
 Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which our implementation transforms to the even shorter regular expression \Verb@(\()*<int>([*+]<int>\))*@. In essence, this is equivalent to the description by Christensen et al. we mentioned earlier.
 Therefore, when using some optimizations, our approach produces very short, human-readable regular expressions even for complex inputs.
 
-The regular expressions mentioned here all accept the same language and just differ in their length and complexity. An overview of the different results can be seen in Table \ref{tab:trickyResults}.
+The regular expressions mentioned here all accept the same language and just differ in their length and complexity. An overview of the different results and the non-abbreviated regular expressions can be seen in Table \ref{tab:trickyResults}.
 
 Note, that neither our nor Christensen et al.'s result does account for the fact, that in the strings generated in the Tricky example all occurrences of \lstinline|*| are before the first occurrence of \lstinline|+|. This is a shortcoming compared to the manually created regular expression mentioned at the beginning of this section.
 As Christensen et al. mention, this improvement could be achieved by distinguishing the two calls to the \lstinline|bar| method using a polyvariant analysis \cite{brics}, which is explained further in Section \ref{sec:futureWork:polyvariance}.
@@ -97,7 +97,7 @@ As Christensen et al. mention, this improvement could be achieved by distinguish
 \end{figure}
 
 
-\begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, captionpos=b, basicstyle=\small\ttfamily]
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, basicstyle=\small\ttfamily]
 public class Tricky{
 	String bar(int n, int k, String op) {
 		if (k==0) {
@@ -125,6 +125,7 @@ public class Tricky{
 }
 \end{lstlisting}
 
+\newpage
 \subsubsection{SQL query sanitization}
 
 Since the Tricky example is artificially complex, we created the example in Listing \ref{lst:sqlSanit}, which resembles a possible real attempt to sanitize an input for an SQL query.
@@ -135,7 +136,7 @@ Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@
 
 The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ corresponding to the unknown \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the security risk compared to unfiltered input.
 
-\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization example, label=lst:sqlSanit, captionpos=b, basicstyle=\small\ttfamily]
+\begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization example, label=lst:sqlSanit,basicstyle=\small\ttfamily]
 import java.sql.*;
 public class DatabaseSanitization{
 	public static void main(String[] args) throws SQLException {
@@ -163,7 +164,7 @@ The Juliet Test Suite is created by the National Security Agency’s (NSA) Cente
 
 The test cases are grouped by the type of flaw they target, each corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All 2224 test cases we analyzed target SQL injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
 
-The Juliet test cases can generally be grouped into ones using bad sinks, where a query string is vulnerable to an SQL injection and ones using good sinks, where prepared statements are correctly used. For the latter, the queries are just literal strings like \lstinline|"select * from users where name=?"|, where the replacement of the question mark with the desired parameter is handled internally by the SQL library.
+The Juliet test cases can generally be grouped into ones using bad sinks, where a query string is vulnerable to an SQL injection and ones using good sinks, where prepared statements are used correctly. For the latter, the queries are just literal strings like \lstinline|"select * from users where name=?"|, where the replacement of the question mark with the desired parameter is handled internally by the SQL library.
 
 The vulnerable test cases in the Juliet test suite build an SQL query similar to \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string. The actual semantics of the statements differ, but they all have the same structure where the value is injected as a parameter at the end of the query.
 
@@ -347,7 +348,7 @@ Also note that the relative execution times of the different steps are fairly co
 	\label{fig:eval:plot:juliet}
 \end{figure}
 
-\section{Limitations of the evaluation}
+\section{Limitations of the evaluation}\label{sec:discussion:limitations}
 
 We have to note that all examples we used to test our implementation are synthetic examples. This is due to the fact that we currently only support a small subset of the Java language, which is not enough to obtain meaningful results from real code. It is unclear how closely the used examples resemble most actual application code and to what extent the observations we made can be transferred to real world use.
 
@@ -356,7 +357,7 @@ Listing \ref{lst:opendaylight:vulnerable} shows an excerpt of the vulnerable cod
 
 This code has striking similarities to our synthetic example from Listing \ref{lst:sqlSanit}, as malicious user input is (insufficiently) sanitized and naively inserted into the query. As we demonstrated, our implementation can provide useful information for vulnerabilities of this complexity. This suggests that the approach can be viable for real world applications when extended to support the complete Java standard library.
 
-\begin{lstlisting}[label={lst:opendaylight:vulnerable}, caption={Adapted excerpt from vulnerable code},escapeinside={(*}{*)}, numbers=right, captionpos=b]
+\begin{lstlisting}[label={lst:opendaylight:vulnerable}, caption={Adapted excerpt from vulnerable code},escapeinside={(*}{*)}, numbers=right]
 deleteRole(String roleid){
 	String escaped = StringEscapeUtils.escapeHtml4(roleid);
 	String query = 
@@ -378,7 +379,7 @@ Our implementation currently does not try to evaluate assertions like \lstinline
 
 Consider the example in Listing \ref{lst:assertions} where \lstinline|getSomeKnownValue()| returns some value we can analyze, which is henceforth abbreviated with the generic \lstinline|<val>|.
 
-\begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, captionpos=b, numbers=right, escapechar=|]
+\begin{lstlisting}[caption={Assertion Example}, label=lst:assertions, numbers=right, escapechar=|]
 	String s|\textcolor{red}{$^1$}| = getSomeKnownValue(); |\label{lst:assertions:def}|
 	if(s|\textcolor{red}{$^2$}|.isEmpty()){ |\label{lst:assertions:condition}|
 		s|\textcolor{red}{$^4$}| = s|\textcolor{red}{$^3$}| + "empty"; |\label{lst:assertions:ifbody}|

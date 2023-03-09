@@ -52,11 +52,12 @@ For a \acf{nfa}, from a given state multiple states can be reached with the same
 We represent automata as graphs, where each state is a node and the transition function is represented by edges labeled with elements of $\Sigma$. The start state is marked with an incoming arrow and the accepting states are marked with double circles.
 An edge in this graph, henceforth also called transition, is denoted as $(q_1, a, q_2)$, where $q_1 \in Q$ is the origin state, $a \in \Sigma$ is the label and $q_2 \in Q$ is the target state of the edge.
 
+\newpage
 \section{Regular Expressions}\label{sec:background:regex}
 
 We use a regular expression syntax with metacharacters from the Java regular expression flavor, which can be seen in Table \ref{tab:regex}.
 
-\begin{table}
+\begin{table}[htbp]
 	\centering
 	\begin{tabular}{ccc}
 			\toprule
@@ -81,6 +82,8 @@ We use a regular expression syntax with metacharacters from the Java regular exp
 
 Expressions are grouped using round brackets and meta characters escaped using single backslashes.
 In a character class consecutive characters can be abbreviated using \Verb@-@, e.g. \Verb@[0-9]@ to match any digit.
+
+Languages accepted by regular expressions that use more advanced features like look-ahead assertions or backreferences are not necessarily regular \cite{regex}. However, with the presented limited syntax only expressions accepting regular languages can be generated, as all used features can be simulated using the features present in the textbook definition of regular languages.
 
 \section{Code Property Graph}\label{sec:background:cpg}
 A \acf{cpg} is a directed multi graph, where the nodes represent syntactic elements like simple expressions or function declarations and the edges represent the relations between those elements.
