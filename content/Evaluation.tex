@@ -21,24 +21,24 @@ We create the grammar starting at the node representing the variable reference \
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
 Christensen et al. obtain a different grammar for this example. This difference stems from differences in the definition and implementation of the data flow graph.
 
-The \ac{nfa} created from the grammar contains 28 states and 39 transitions, of which 27 are $\epsilon$ transitions, and can be seen in Figure \ref{fig:appendix:trickyNFA} of Appendix \ref{appendix:automaton}.
+The \ac{nfa} created from the grammar contains 40 states and 51 transitions, of which 39 are $\epsilon$ transitions, and can be seen in Figure \ref{fig:appendix:trickyNFA} of Appendix \ref{appendix:automaton}.
 The \acp{nfa} created using Nederhof's algorithm in general often have unnecessary states and transitions, like chains of states only connected by $\epsilon$ transitions.
 
 Christensen et al. describe the language they obtained with the expression \Verb|\(*<int>([+*]<int>\))*| \cite{brics}. Note that Christensen et al. only create automata and not regular expressions, so this expression is just to describe their created automaton. How their automaton compares to ours is unclear, as they only share this description of the language. We still use  their short regular expression as a comparison for our results, both for correctness of the language we accept and size of the expressions.
 
-With a length of 622 characters, the regular expression we obtain is more complex than necessary, but it accepts the same language as the one given by Christensen et al.. 
+With a length of 315 characters, the regular expression we obtain is more complex than necessary, but it accepts the same language as the one given by Christensen et al.. 
 The high complexity stems from many optional cases in the expression, which could either be combined into one case or which accept a subset of another option already present in the expression.
 However, this length is for a sub-optimal scenario, and can be improved like described in the following.
 
-Note that our implementation uses the built in Kotlin functionality to escape strings. This implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 120 characters compared to escaping using a backslash.
+Note that our implementation uses the built in Kotlin functionality to escape strings. This implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 45 characters compared to escaping using a backslash.
 To increase readability we use the \lstinline|<int>| abbreviation and replace the \lstinline|\Q\E| escape characters with single backslashes in the following regular expressions.
 
 Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an equivalent \ac{dfa} significantly improves the result. The corresponding regular expression for this \ac{dfa}, which can be seen in Figure \ref{fig:eval:tricky:dfa}, is 
 \begin{Verbatim}[breaklines=true, breakanywhere=true]
-(((\((\()*(<int>)|<int>)(\*|\+))(((<int>)\))(\*|\+))*((<int>)\)))|(\((\()*(<int>)|<int>)
+(((\((\()*(<int>)|<int>)[*+])(((<int>)\))[*+])*(((<int>)\))))|((\((\()*(<int>)|<int>))
 \end{Verbatim}
 
-Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which our implementation transforms to the even shorter regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@. In essence, this is equivalent to the description by Christensen et al. we mentioned earlier.
+Minimizing the created \ac{dfa} gives the automaton in Figure \ref{fig:eval:tricky:dfamin}, which our implementation transforms to the even shorter regular expression \Verb@(\()*<int>([*+]<int>\))*@. In essence, this is equivalent to the description by Christensen et al. we mentioned earlier.
 Therefore, when using some optimizations, our approach produces very short, human-readable regular expressions even for complex inputs.
 
 The regular expressions mentioned here all accept the same language and just differ in their length and complexity. An overview of the different results can be seen in Table \ref{tab:trickyResults}.
