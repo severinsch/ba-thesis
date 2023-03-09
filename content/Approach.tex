@@ -1,8 +1,9 @@
 \chapter{Approach and Implementation}
 \label{chapter:Approach}
 
-We first provide a general overview of our approach before explaining the different steps.
-% TODO satz verbessern
+
+We first provide a general overview of our approach and describe which steps are needed for the transformation from \ac{dfg} to regular expression. Subsequently, we provide a detailed description of each step.
+
 
 \section{General Approach}
 
@@ -191,8 +192,8 @@ As mentioned above, in the example in Figure \ref{fig:charset:grammar} the chara
 
 To determine the \acp{scc}, we use Tarjan's algorithm \cite{tarjan}.
 The \acp{scc} of a graph form a \ac{dag}, because if the graph of \acp{scc} would contain a cycle, all contained components would be strongly connected and therefore joined into one component. This \ac{dag} implies that there exists a topological ordering of the \acp{scc} \cite{mit_algorithms}.
-Tarjan's algorithm topologically sorts the returned components in reverse order as a byproduct, which is necessary for the fixpoint computation to terminate.
-During the computation, for a given nonterminal $N$, its charset is updated using the charsets of its successors. The reverse topological ordering of the components ensures that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has already been handled earlier.
+Tarjan's algorithm topologically sorts the returned components in reverse order as a byproduct, which is necessary for the fixed-point iteration to terminate.
+During the computation, for a given nonterminal $N$, its charset is updated using the character sets of its successors. The reverse topological ordering of the components ensures that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has already been handled earlier.
 
 To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$. Here $C(X)$ again denotes the character set we assigned to $X$.
 
@@ -200,7 +201,7 @@ To find the cycles in the grammar, we check for each nonterminal $A$ in a given 
 
 \subsubsection{Character Set Implementation}
 
-In real world applications, the occurring character sets usually either contain only a few characters, for example the alphanumerics in a string literal, or almost all characters, for example when a single character is removed from an unknown variable represented by $\Sigma$.
+In real world applications, the occurring character sets usually either contain only a few characters, for example the alphanumericals in a string literal, or almost all characters, for example when a single character is removed from an unknown variable represented by $\Sigma$.
 
 We also need to efficiently convert both of these types of sets into short regular expressions to keep the results human-readable. A naive implementation like joining all contained characters using the regular expression choice operator would lead to extremely long expressions for very large sets.
 
@@ -570,11 +571,11 @@ For more complex operation transformations like a $reverse$ operation, the opera
 
 Consider the automaton in Figure \ref{fig:reverse:automaton1}, where the colored parts are tainted with the $reverse$ operation.
 
-To apply the reverse operation we first duplicate the tainted subautomaton and create a new state for each contained state. Here $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
-Now we reverse the direction of all edges in the duplicated subautomaton.
+To apply the reverse operation we first duplicate the tainted sub-automaton and create a new state for each contained state. Here $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
+Now we reverse the direction of all edges in the duplicated sub-automaton.
 For example, after duplication there was the edge $(q_6, c, q_5)$ because the original automaton had an edge $(q_3,c,q_1)$. This edge is now reversed to give us the edge $(q_5, c, q_6)$ that is present in the final automaton.
 
-After reversing all edges, the subautomaton is connected back to the rest using new $\epsilon$ edges.
+After reversing all edges, the sub-automaton is connected back to the rest using new $\epsilon$ edges.
 Finally all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
 In the example automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
 The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
@@ -611,7 +612,7 @@ The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 			(q2) edge node[above] {$c$}   (q1)
 			(q3) edge [draw = red] node[above] {$c$}   (q1);
 		\end{tikzpicture}
-		\caption{Resulting automaton for the grammar in figure \ref{fig:reverse:grammar}}
+		\caption{Resulting automaton for the grammar in figure \ref{fig:reverse:grammar}\\}
 		\label{fig:reverse:automaton1}
 	\end{minipage}
 	\hfill
@@ -637,7 +638,7 @@ The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 			(q6) edge [loop left] node[left] {$b$}   (q6)
 			(q4) edge node[below] {$\epsilon$}   (q1);
 		\end{tikzpicture}
-		\caption{Automaton in figure \ref{fig:reverse:automaton1} after applying operation transformation\\}
+		\caption{Automaton in figure \ref{fig:reverse:automaton1} after applying operation transformation\\\\}
 		\label{fig:reverse:automaton2}
 	\end{minipage}
 \end{figure}

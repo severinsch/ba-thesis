@@ -410,7 +410,7 @@ Christensen et al. implement a similar feature in their implementation.
 
 \subsection{Polyvariance}\label{sec:futureWork:polyvariance}
 
-Polyvariance is an analysis strategy, where functions are analyzed more than once, usually once for every call site \cite{polyvariance}. The best result we currently obtain for the Tricky example is the regular expression \Verb@(\()*<int>((\*|\+)<int>\))*@, that does not differentiate between \Verb@*@ and \Verb@+@. Using a polyvariant analysis could improve this, because the two calls to the \lstinline|bar| function would be analyzed separately with respect to their corresponding arguments. 
+Polyvariance is an analysis strategy, where functions are analyzed more than once, usually once for every call site \cite{polyvariance}. The best result we currently obtain for the Tricky example is the regular expression \Verb@(\()*<int>([*+]<int>\))*@, that does not differentiate between \Verb@*@ and \Verb@+@. Using a polyvariant analysis could improve this, because the two calls to the \lstinline|bar| function would be analyzed separately with respect to their corresponding arguments. 
 
 Currently, we only follow the \ac{dfg} edges, of which the parameter of the function has one to each variable passed as a parameter, here \lstinline|+| and \lstinline|*|. These two edges are not differentiated and the same result is used for both calls to the function.
 By differentiating between the corresponding arguments for the analysis of each call, we could sharpen the result to \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@.
