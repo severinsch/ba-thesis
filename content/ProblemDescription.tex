@@ -14,7 +14,7 @@ This approximation poses the challenge of deciding, which information to retain 
 
 Furthermore, since the grammars our approximation creates are not textbook regular grammars, but rather strongly regular grammars, we need to use algorithms suited to this type of grammar for the conversion.
 
-Since we use automata as an intermediary step in the conversion from grammar to regular expression, we use the state elimination algorithm \cite{brzozowksi_mccluskey} to convert a \ac{nfa} to a regular expression. As we want our results to be human-readable, we need to minimize the length of the resulting regular expression by optimizing the state elimination algorithm.
+Since we use automata as an intermediary step in the conversion from grammar to regular expression, we use the state elimination algorithm \cite{brzozowksi_mccluskey} to convert a \ac{nfa} to a regular expression. As we want our results to be human-readable, we need to reduce the length of the resulting regular expression by optimizing the state elimination algorithm.
 \clearpage
 To summarize, the following research questions are posed.
 

@@ -23,7 +23,6 @@
 
 We first provide the motivation for our work in Section \ref{sec:intro:motivation}, then describe our contribution to the field in Section \ref{sec:intro:contribution} and further establish the outline for the rest of the thesis in Section \ref{sec:intro:outline}.
 
-%TODO sections? gar kein aufsplitten?
 \section{Motivation}\label{sec:intro:motivation}
 
 The increasing reliance on software applications in various aspects of modern life has led to a growing concern for the security of these applications. Among the many security threats that can affect software, injection vulnerabilities are among the most dangerous and prevalent. The Open Web Application Security Project (OWASP) consistently lists injection attacks, which include SQL injection, LDAP injection, and command injection, as one of the top ten web application security risks \cite{owasp}.
@@ -34,11 +33,11 @@ To assist developers and security researches in spotting injection vulnerabiliti
 
 In order to detect injection vulnerabilities, such tools can try to analyze the possible values a string that is passed as a query to e.g. a database can take on.
 From these inferred properties, a tool can then assess whether the analyzed program contains any potential injection vulnerabilities and alert the programmer.
-Since the analyzed strings often contain unknown user inputs, enumerating all possible values is not possible. 
+Since the analyzed strings often contain unknown user inputs, enumerating all possible values is not feasible. 
 
 Therefore, we use regular expressions to describe the properties of all possible values.
 For example, consider a string variable, that is used as an SQL query and is determined to be described by the regular expression \Verb@DELETE \* FROM myTable WHERE id='.*'@.
-This information can be used to issue a warning during a static analysis, because the analyzed program allows for an arbitrary unchecked string to be inserted into the SQL query, which is a severe security vulnerability.k
+This information can be used to issue a warning during a static analysis, because the analyzed program allows for an arbitrary unchecked string to be inserted into the SQL query, which poses a severe security vulnerability.
 
 \section{Contribution}\label{sec:intro:contribution}
 

@@ -298,6 +298,14 @@ Nederhof describes an algorithm to transform an \ac{srg} into an equivalent $\ep
 
 The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac{nfa} $(K,\Sigma, \Delta, s, F)$ with a set of states $K$, an alphabet $\Sigma$, a set of transitions $\Delta$, an initial state $s$ and a set of accepting states $F$ from a given \ac{srg} $(\Sigma, N, P, S)$ with an alphabet $\Sigma$, a set of nonterminals $N$,  a set of productions $P$ and a start nonterminal $S$.
 
+Note that, for the general algorithm an operation production of form $A \rightarrow op(X)$ is treated like a unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines \ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production initially contained in a cycle, the cycle is broken up by the character set approximation described in Section \ref{sec:charsetApprox}.
+Therefore, e.g. an operation production $C \rightarrow op(D)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
+We provide a detailed description of resolving the effects of the operations in Section \ref{sec:opProduction}.
+
+The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar defined by $\alpha$ between those two states.
+
+This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ as $q_0$ and a newly created accepting state $f$ as $q_1$.
+
 \begin{algorithm}[!h]
 	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
 	\label{nederhofAlg}
@@ -348,14 +356,7 @@ The full algorithm can be seen in Algorithm \ref{nederhofAlg}. It creates an \ac
 		
 	\end{algorithmic}
 \end{algorithm}
-
-Note that, for the general algorithm an operation production of form $A \rightarrow op(X)$ is treated like a unary production of form $A \rightarrow X$. The operation productions are always handled by one of the loops in lines \ref{alg:left:firstrec}, \ref{alg:right:firstrec} or \ref{alg:nonrecloop}, because for any operation production initially contained in a cycle, the cycle is broken up by the character set approximation described in Section \ref{sec:charsetApprox}.
-Therefore, e.g. an operation production $C \rightarrow op(D)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
-We provide a detailed description of resolving the effects of the operations in Section \ref{sec:opProduction}.
-
-The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar defined by $\alpha$ between those two states.
-
-This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ as $q_0$ and a newly created accepting state $f$ as $q_1$.
+\clearpage
 
 For single terminals and $\epsilon$ the algorithm adds an according edge between the two nodes $q_0$ and $q_1$ in lines \ref{alg:eps} to \ref{alg:singleTerm}.
 Here our implementation differs from the original definition because we allow strings and regular expressions as terminals, whereas usually terminals are single characters. We generalize Nederhof's definition by allowing $a \in \Sigma^*$ instead of just $a \in \Sigma$.
@@ -733,7 +734,7 @@ After repeatedly applying the two rules and eliminating all other states, the re
 The resulting regular expressions often do not have minimal length, but there exists no efficient algorithm that always produces optimal regular expressions.
 
 Minimizing regular expressions is PSPACE-complete \cite{minimizing_nfa}.
-If there were an efficient algorithm to obtain the minimal regular expression for a given \ac{nfa}, one could first apply Thompson's algorithm \cite{thompson} for turning a regular expression into an equivalent \ac{nfa} and then this algorithm. This chaining would then be an efficient regular expression minimization algorithm, which is not possible as mentioned above.
+If there were an efficient algorithm to obtain the minimal regular expression for a given \ac{nfa}, one could first apply Thompson's algorithm \cite{thompson} for turning a regular expression into an equivalent \ac{nfa} and then this algorithm. This chaining would then be an efficient algorithm for regular expression minimization algorithm, which contradicts its proven PSPACE-completeness.
 
 However, we can still improve the result we obtain using the state elimination method.
 The order in which states are eliminated affects the size of the resulting regular expression. There exist different heuristics for choosing an elimination order to reduce the expression size.
@@ -762,4 +763,4 @@ Since it is unclear in which cases conversion to \acp{dfa} leads to better resul
 \section{Hotspot Collection} 
 We also implemented a new pass that traverses the \ac{cpg} and collects nodes representing string values which might be of interest for further analysis. 
 This hotspot collection provides common starting points for our grammar creation to the user. However, the grammar creation is completely independent of this collection and a grammar can be created for any string node, independent of whether it is part of the collection.
-We consider all strings that are passed as an SQL query to the Standard Java SQL API, as these are the locations where potential SQL injections can occur.
+We consider all strings that are passed as an SQL query to the Standard Java SQL API as hotspots, as these are the locations where potential SQL injections can occur.
