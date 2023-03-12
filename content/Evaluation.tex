@@ -1,13 +1,13 @@
 \chapter{Evaluation and Discussion}
 \label{chapter:Evaluation}
 
-We first evaluate our approach regarding the obtained results and its performance. Afterwards, we discuss its limitations and potential future work to improve and extend our current implementation.
+We first evaluate our approach regarding the obtained results and its performance. Afterward, we discuss its limitations and potential future work to improve and extend our current implementation.
 
 \section{Evaluation and Benchmarking}
 
-In this section, we first analyze the quality of the results of our approach, e.g. concerning the length of the regular expression and whether it describes a correct language that contains all possible values of the analyzed variable in Section \ref{sec:eval:quality}. As a metric for the quality of the result we use the length of the regular expression, because shorter and more concise expressions are easier to read and understand for a human user.
+In this section, we first analyze the quality of the results of our approach, e.g. concerning the length of the regular expression and whether it describes a correct language that contains all possible values of the analyzed variable in Section \ref{sec:eval:quality}. As a metric for the quality of the result, we use the length of the regular expression, because shorter and more concise expressions are usually easier to read and understand for a human user.
 
-Afterwards, we measure the execution times of the different steps, including grammar creation, character set and Mohri-Nederhof approximation and automaton and regex creation in Section \ref{sec:eval:peformance}. We analyze the effects of different inputs and variations of our approach.
+Afterward, we measure the execution times of the different steps, including grammar creation, character set and Mohri-Nederhof approximation as well as automaton and regex creation in Section \ref{sec:eval:peformance}. We analyze the effects of different inputs and variations of our approach.
 
 \subsection{Quality}\label{sec:eval:quality}
 
@@ -28,9 +28,9 @@ Christensen et al. describe the language they obtained with the expression \Verb
 
 With a length of 315 characters, the regular expression we obtain is more complex than necessary, but it accepts the same language as the one given by Christensen et al.. 
 The high complexity stems from many optional cases in the expression, which could either be combined into one case or which accept a subset of another option already present in the expression.
-However, this length is for a sub-optimal scenario, and can be improved like described in the following.
+However, this length is for a sub-optimal scenario, and can be improved as we describe in the following.
 
-Note that our implementation uses the built in Kotlin functionality to escape strings. This implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 45 characters compared to escaping using a backslash.
+Note that our implementation uses the built-in Kotlin functionality to escape strings. This implementation escapes literals by surrounding them with the special characters \lstinline|\Q| and \lstinline|\E|, which adds 45 characters compared to escaping using a backslash.
 To increase readability we use the \lstinline|<int>| abbreviation and replace the \lstinline|\Q\E| escape characters with single backslashes in the following regular expressions.
 
 Like mentioned in Section \ref{sec:nfa2regex}, converting the \ac{nfa} into an equivalent \ac{dfa} significantly improves the result. The corresponding regular expression for this \ac{dfa}, which can be seen in Figure \ref{fig:eval:tricky:dfa}, is 
@@ -98,7 +98,7 @@ As Christensen et al. mention, this improvement could be achieved by distinguish
 
 
 \begin{lstlisting}[float, escapechar=|, numbers=right, caption=Tricky example, label=lst:tricky, basicstyle=\small\ttfamily]
-public class Tricky{
+public class Tricky {
 	String bar(int n, int k, String op) {
 		if (k==0) {
 			return "";
@@ -110,7 +110,7 @@ public class Tricky{
 		if (n<2) {
 			b = b + "(";
 		}
-		for (int i=0; i<n; i++){
+		for (int i=0; i<n; i++) {
 			b = b + "(";
 		}
 		String s = bar(n-1,n/2-1,"*");
@@ -134,11 +134,11 @@ Note that the given code does not compile as \lstinline|Connection| is an interf
 
 Our approach returns \Verb@(DELETE \* FROM users WHERE ((id|name) = '[^'\-]*'))@ as a result when analyzing the argument of the \lstinline|executeQuery| call. This result correctly displays the two possible options \lstinline|id| and \lstinline|name| for the parameter.
 
-The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ corresponding to the unknown \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since for a successful SQL injection an attacker would need to close the opened quote using a single quote character, a further evaluation of this result could show that this sanitization reduces the security risk compared to unfiltered input.
+The transformation of the two \lstinline|replace| operations also correctly transformed the initial wildcard \Verb@.*@ corresponding to the unknown \lstinline|input| to an expression matching any strings that do not contain one of the SQL special characters \lstinline|'| or \lstinline|-|. Since an attacker would need to close the opened quote using a single quote character for a successful SQL injection, a further evaluation of this result could show that this sanitization reduces the security risk compared to unfiltered input.
 
 \begin{lstlisting}[float, escapechar=|, numbers=right, caption=SQL query sanitization example, label=lst:sqlSanit,basicstyle=\small\ttfamily]
 import java.sql.*;
-public class DatabaseSanitization{
+public class DatabaseSanitization {
 	public static void main(String[] args) throws SQLException {
 		String input = args[1];
 		
@@ -152,7 +152,7 @@ public class DatabaseSanitization{
 		);
 	}
 	
-	public static String sanitize(String input){
+	public static String sanitize(String input) {
 		return input.replace('\'', ' ').replace('-', ' ');
 	}
 }
@@ -160,7 +160,7 @@ public class DatabaseSanitization{
 
 \subsubsection{Juliet}
 
-The Juliet Test Suite is created by the National Security Agency’s (NSA) Center for Assured Software (CAS) and specifically designed to assess the capabilities of static analysis tools.
+The Juliet Test Suite by the National Security Agency’s (NSA) Center for Assured Software (CAS) is specifically designed to assess the capabilities of static analysis tools.
 
 The test cases are grouped by the type of flaw they target, each corresponding to a specific CWE\footnote{https://cwe.mitre.org} entry. All 2224 test cases we analyzed target SQL injection vulnerabilities described in CWE-89, as these are flaws, where strings and string operations are the relevant points, while also being relevant risks in real applications.
 
@@ -168,7 +168,7 @@ The Juliet test cases can generally be grouped into ones using bad sinks, where 
 
 The vulnerable test cases in the Juliet test suite build an SQL query similar to \lstinline|"insert into users (status) values ('updated') where name='"+data+"'"|, where \lstinline|data| is an unsanitized string. The actual semantics of the statements differ, but they all have the same structure where the value is injected as a parameter at the end of the query.
 
-The cases also differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library. Sometimes \lstinline|data| is unknown and other times a string constant. We are interested in the case, where the value of \lstinline|data| is unknown, as these cases pose security vulnerabilities.
+The cases also differ in the data flow from the source of the \lstinline|data| string and the sink, where it is passed to a database library. Sometimes \lstinline|data| is unknown and other times a string constant. We are interested in the case, where the value of \lstinline|data| is unknown, as these cases sometimes pose security vulnerabilities.
 
 For these cases, we obtain regular expressions similar to the example \Verb@(insert into users (status) values ('updated') where name='.*')@ as a result.
 
@@ -177,10 +177,10 @@ While the interpretation and analysis of the obtained expressions is out of scop
 \subsection{Performance}\label{sec:eval:peformance}
 
 Further, we measured the execution time of the different steps in our analysis approach. 
-We measure the steps separately to observe the relative differences between the individual steps and the effects of the optimizations we described. The total execution times naturally depend on the machine used to run the analysis. We used a common desktop computer\footnote{Intel i7-3770K (8 cores) @ 4.100GHz with 16 GB RAM running Arch Linux 6.1} for the benchmarks.
+We measure the steps separately to observe the relative differences between the individual steps and the effects of the optimizations we described. Execution times naturally depend on the machine used to run the analysis. We used a common desktop computer\footnote{Intel i7-3770K (8 cores) @ 4.100GHz with 16 GB RAM running Arch Linux 6.1} for the benchmarks.
 As in the previous section we considered the two synthetic examples and the test cases of the Juliet test suite. 
-
-In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This type of truncation is a common method to increase the robustness of the mean, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This method eliminates the effect of statistical outliers, which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling, caching or other unknown influences. For example when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input. Such outliers would skew our measurements and therefore are disregarded for the analysis.
+% TODO präsens?
+In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This type of truncation is a common method to increase the robustness of the mean, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This method eliminates the effect of statistical outliers which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling, caching or other unknown influences. For example, when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input. Such outliers would skew our measurements and therefore are disregarded for the analysis.
 
 \begin{figure}[H]
 	\captionbox{Durations of Tricky example in $\mu s$\label{fig:eval:plot:tricky}}{
@@ -240,7 +240,7 @@ In the following, all mentioned averages are truncated means, which means that b
 
 Consider the Figures \ref{fig:eval:plot:tricky} and \ref{fig:eval:plot:trickyDFA}. 
 The plots show the durations of each step in the process from \ac{cpg} to regular expression. 
-In the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
+For the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
 
 For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
 
@@ -248,7 +248,7 @@ For both plots we averaged the measurements of 100 runs after we trimmed the hig
 
 Figure \ref{fig:eval:plot:sqlSani} shows the execution time of analyzing the SQL query sanitization example from the previous section. Similar to the Tricky example, the plot shows the average of 100 measurements trimmed by 20\%. 
 
-Note the different scale of the x axis compared to the previous examples. The difference compared to the other plots is explained with the different complexity of the analyzed code. Since the SQL query sanitization example is considerably less complex than the Tricky example, naturally the analysis execution time is lower. 
+Note the different scale of the x axis compared to the previous examples. The difference compared to the other plots is the result of the different complexity of the analyzed code. Since the SQL query sanitization example is considerably less complex than the Tricky example, naturally the analysis execution time is lower. 
 
 Figure \ref{fig:eval:plot:sqlSaniDfa} again shows the execution times of the query sanitization example, but with the additional step of creating a \ac{dfa} before performing the state elimination algorithm.
 
@@ -355,7 +355,7 @@ We have to note that all examples we used to test our implementation are synthet
 However, looking at recent vulnerability reports in the form of CVEs\footnote{https://www.cve.org/} suggests that comparatively simple SQL injection vulnerabilities still occur in real applications. For example, consider the entry CVE-2022-45932\footnote{https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-45932} for a vulnerability in the OpenDaylight\footnote{https://www.opendaylight.org/} project.
 Listing \ref{lst:opendaylight:vulnerable} shows an excerpt of the vulnerable code, where the \lstinline|deleteRole| function handles a call to an API endpoint and \lstinline|roleid| is user input. Here this user input is insufficiently escaped using an HTML escapement utility provided by Apache, that effectively replaces all characters that cannot be displayed in plain HTML. The single quote character however is not changed by this escapement, which allows e.g. the malicious \lstinline|"' or 1=1--| as a value of \lstinline|escaped|. 
 
-This code has striking similarities to our synthetic example from Listing \ref{lst:sqlSanit}, as malicious user input is (insufficiently) sanitized and naively inserted into the query. As we demonstrated, our implementation can provide useful information for vulnerabilities of this complexity. This suggests that the approach can be viable for real world applications when extended to support the complete Java standard library.
+This code has striking similarities to our synthetic example from Listing \ref{lst:sqlSanit}, as malicious user input is (insufficiently) sanitized and naively inserted into the query. As we demonstrated, our implementation can provide useful information for vulnerabilities of this complexity. This suggests that the approach may be viable for real world applications when extended to support the complete Java standard library.
 
 \begin{lstlisting}[label={lst:opendaylight:vulnerable}, caption={Adapted excerpt from vulnerable code},escapeinside={(*}{*)}, numbers=right]
 deleteRole(String roleid){
@@ -371,7 +371,7 @@ deleteRole(String roleid){
 
 \section{Future Work}
 
-We discuss several limitations of our implementation and present potential approaches, how future work can mitigate these limitations and extend our implementation.
+We discuss several limitations of our implementation and present potential approaches, how future work can mitigate these limitations, and extend our implementation.
 
 \subsection{Assertions}
 
@@ -425,7 +425,7 @@ A more advanced analysis of arrays, that for example inserts data flow edges fro
 
 We mostly focused on simple strings, but in general everything we described can be applied to string builders, string buffers, string writers and similar classes. For example, during grammar creation, a \lstinline|ConcatProduction| could not only be created for \lstinline|s1 + s2| with two strings, but also for \lstinline|sb.append(s)| with a \lstinline|StringBuilder sb| and some other string. 
 
-Currently, however, the \ac{dfg} does not account for method calls on mutable objects. For example, for the mentioned \lstinline|sb.append| call, there is no \ac{dfg} edge to a subsequent reference of \lstinline|sb|, even though the append call changes the value referenced by it. Therefore, the value change is not reflected by the \ac{dfg}, which makes extracting information hard. An approach to obtain this information could include collecting all method calls performed on such an object, ordering them using the evaluation order edges of the \ac{cpg} and then evaluating their effects in that order.
+Currently, however, the \ac{dfg} does not account for method calls on mutable objects. For example, for the mentioned \lstinline|sb.append| call, there is no \ac{dfg} edge to a subsequent reference of \lstinline|sb|, even though the append call changes the value referenced by it. Therefore, the value change is not reflected by the \ac{dfg}, which makes extracting information hard. An approach to obtain this information could include collecting all method calls performed on such an object, ordering them using the evaluation order edges of the \ac{cpg}, and then evaluating their effects in that order.
 
 As this is just a proof of concept, we also implemented only a few operations on strings to showcase the approach. For a fully functioning analysis, the other operations included in the Java standard library need to be supported.
 
@@ -435,21 +435,21 @@ Moreira et al. analyzed and evaluated different existing heuristics and proposed
 
 While they conclude that the method by Delgado and Morais \cite{delgado} we use is similar to their newly proposed heuristics, they also note that the new strategies outperform Delgado's for small automata. Since the automata we handle are comparatively small, adapting our implementation to use one of the proposed new heuristics could improve the quality of the results.
 
-Moreira et al. also observe that the strategy of taking the best result of using all three heuristics as a final result leads to a gain of 25\%. This approach of trying multiple strategies is also used by the powerful Vcsn platform for computations on finite state machines \cite{vcsn}.
+Moreira et al. also observe that the strategy of taking the best result of using all three heuristics as a final result leads to a gain of 25\%. This approach of trying multiple strategies is also used by the Vcsn platform for computations on finite state machines \cite{vcsn}.
 
 \subsection{Automata Centric Approach}
 
 We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
 However, representing the information as \acp{dfa} instead of converting the automata to regular expressions has some advantages due to theoretical properties of \acp{dfa}.
 
-Regular expression objects in most programming languages, for example Kotlin's \lstinline|Regex| object, can determine whether a given string matches the expression. With a sufficiently advanced automaton implementation more advanced checks can be performed.
+In most programming languages, regular expression objects, for example Kotlin's \lstinline|Regex| object, can determine whether a given string matches the expression. Using a sufficiently advanced automaton implementation more advanced checks can be performed.
 After analyzing a given hotspot and obtaining an automaton $M$, instead of just matching a given string as a query, the input can be a regular expression. This regular expression can then be turned into another \ac{dfa} $N$.
 Since \acp{dfa} are closed under intersection and complement, we can build the \ac{dfa} $R = M \cap \overline{N}$, which accepts words that are in the language of the analysis result, but not in the language of the query expression.
 Now we can check whether $R$'s language is empty to determine whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a word from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
 Additionally, we can check whether $M$ and $N$ are equivalent to determine, whether the query expression matches the computed result.
 
 We currently focus on producing human readable results in the form of regular expressions. For a fully automated analysis however, these advanced query possibilities could be leveraged to produce better feedback for users.
-Since we use \acp{nfa} or optionally already \acp{dfa} as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned features.
+Since we use \acp{nfa}, or optionally already \acp{dfa}, as an intermediate representation, future work could increase the capabilities of our automata implementation and implement the mentioned features.
 
 \begin{comment}
 \begin{itemize}

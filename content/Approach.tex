@@ -7,7 +7,7 @@ We first provide a general overview of our approach and describe which steps are
 
 \section{General Approach}
 
-The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first create a \acf{cfg} from the \ac{dfg} in a process described in Section \ref{sec:grammarCreation}.
+The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first create a \acf{cfg} from the \ac{dfg} in the process described in Section \ref{sec:grammarCreation}.
 The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an \acf{nfa} using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton using the state elimination strategy. Figure \ref{fig:approach} visualizes this process and the different steps from a graph to different types of formal grammars to a regular expression.
 
 
@@ -107,17 +107,17 @@ Consider the code example in Listing \ref{lst:grammar_example} for the following
 	s(*\textcolor{red}{$^4$}*) = s(*\textcolor{red}{$^5$}*).trim();
 \end{lstlisting}
 
-\lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In Listing \ref{lst:grammar_example} this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
+\lstinline|UnitProduction|s mostly represent references between nodes where the underlying string is not changed. In Listing \ref{lst:grammar_example}, this would be the case for the reference from \lstinline|s|$^3$ to the variable declaration in line 1. 
 
-\lstinline|ConcatProduction|s are created for \lstinline|BinaryOperator| nodes that represent a string concatenation using the \lstinline|+| operator. For the example in Listing \ref{lst:grammar_example} the nonterminal corresponding to the \lstinline|BinaryOperator| node for the \lstinline|+| in line 2 would have a \lstinline|ConcatProduction| with the right hand side nonterminals corresponding to the nodes for \lstinline|s|$^3$ and the string literal respectively.
+\lstinline|ConcatProduction|s are created for \lstinline|BinaryOperator| nodes that represent a string concatenation using the \lstinline|+| operator. For the example in Listing \ref{lst:grammar_example}. the nonterminal corresponding to the \lstinline|BinaryOperator| node for the \lstinline|+| in line 2 would have a \lstinline|ConcatProduction| with the right hand side nonterminals corresponding to the nodes for \lstinline|s|$^3$ and the string literal respectively.
 
 \lstinline|TerminalProduction|s point to a \lstinline|Terminal| that represents a fixed regular expression.
-For example, for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string \enquote{bar}. \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value and therefore the corresponding \lstinline|Terminal| contains the regular expression \lstinline|.*|, matching all strings.
+For example, for the \lstinline|Literal| \ac{cpg} node representing the \lstinline|"bar"| string literal, the corresponding nonterminal has a \lstinline|TerminalProduction| where the \lstinline|Terminal| contains a regular expression that matches only the string \enquote{bar}. \lstinline|TerminalProduction|s also occur at \ac{cpg} nodes without incoming \ac{dfg} edges where the value is not known. Those nodes could represent any string value, and therefore, the corresponding \lstinline|Terminal| contains the regular expression \lstinline|.*|, matching all strings.
 
 \lstinline|OperationProduction|s represent function calls or other operators. The \ac{cpg} for Listing \ref{lst:grammar_example} contains a \lstinline|CallExpression| representing the function call to the library function \lstinline|trim|. We create a \lstinline|Trim| object representing this operation and the \lstinline|OperationProduction| $X \rightarrow trim(Y)$, where $X$ is the nonterminal corresponding to the node representing \lstinline|s|$^4$ and $Y$ to the one representing \lstinline|s|$^5$. 
 All operation objects like \lstinline|Trim| also contain information about possible arguments and implement a character set transformation and an automaton transformation. These transformations describe the effect of the operation on the set of characters making up the words the operation is applied on or automata accepting those words respectively.
 Examples and how these transformations are used for the approximation are described in Section \ref{sec:approximation}.
-This language agnostic representation of string operations allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example for the Python expression \lstinline[language=Python]|"abc" * 5| the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| operation object. For all further steps it is not relevant whether this repeat operation is created from the mentioned Python operator \lstinline[language=Python]|s * n| or from the corresponding Java function \lstinline|s.repeat(n)|. 
+This language agnostic representation of string operations allows developers of the \ac{cpg} library to add support for functions and operators in other languages with different semantics compared to the corresponding Java functions, without needing to change the grammar approximation. For example, for the Python expression \lstinline[language=Python]|"abc" * 5|, the \lstinline|*| operator can be represented using a generic \lstinline|Repeat| operation object. For all further steps it is not relevant whether this repeat operation is created from the mentioned Python operator \lstinline[language=Python]|s * n| or from the corresponding Java function \lstinline|s.repeat(n)|. 
 
 
 \subsubsection{Improvements}
@@ -139,7 +139,7 @@ To transform the created grammar into a regular expression, we need to approxima
 To use the Mohri-Nederhof approximation algorithm described in Section \ref{sec:mohriNederhofApprox}, we first need to eliminate all cycles in our grammar that contain operation productions \cite{mohri_nederhof}.
 
 First, we view the grammar as a graph in which each symbol of the grammar corresponds to one graph node and for each production there are edges from the nonterminal on the left hand side to all symbols on the right hand side. 
-For two nonterminals $A$ and $B$ there is an edge from the node corresponding to $A$ to the one corresponding to $B$ if and only if there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
+For two nonterminals $A$ and $B$, there is an edge from the node corresponding to $A$ to the one corresponding to $B$ if and only if there exists a production of form $A \rightarrow \alpha B \beta$ with $\alpha$ and $\beta$ sequences of arbitrary symbols.
 This graph allows us to group terminals that are reachable from each other by finding the \acp{scc} of the graph.
 
 All nonterminals are assigned a character set, containing all characters that make up the words in the language of the corresponding nonterminal.
@@ -157,6 +157,7 @@ All nonterminals are assigned a character set, containing all characters that ma
 
 We assign a character set to each nonterminal $N$ using a fixed-point iteration inside the graph component of $N$ that constructs a character set $C(N)$ for $N$ from the character sets of the nonterminals on the right hand side of $N$'s productions.
 
+% TODO zu viel Fors
 For productions with terminals on the right hand side, the character set is just the set of all characters occurring in the terminal. For the terminals that are regular expressions, we create the character set when we construct the regular expression. For example for the regular expression representing integers mentioned above, the character set contains all digits and the minus sign.
 For concatenation productions like $A \rightarrow BC$ in the example above, we take the union of the character sets of the two nonterminals on the right hand side.
 
@@ -195,7 +196,7 @@ The \acp{scc} of a graph form a \ac{dag}, because if the graph of \acp{scc} woul
 Tarjan's algorithm topologically sorts the returned components in reverse order as a byproduct, which is necessary for the fixed-point iteration to terminate.
 During the computation, for a given nonterminal $N$, its charset is updated using the character sets of its successors. The reverse topological ordering of the components ensures that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has already been handled earlier.
 
-To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$. Here $C(X)$ again denotes the character set we assigned to $X$.
+To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$. Here, $C(X)$ again denotes the character set we assigned to $X$.
 
 To find the cycles in the grammar, we check for each nonterminal $A$ in a given component $M$, whether it has an operation production, and if yes, whether one of the nonterminals on its right-hand side is also part of $M$. If this is the case, by definition of \acp{scc}, $A$ is reachable from this nonterminal and therefore the operation production is part of a cycle.
 
@@ -237,7 +238,7 @@ Mohri and Nederhof \cite{mohri_nederhof} describe an algorithm to approximate a 
 
 Recall from the definition of \acp{srg} in Section \ref{sec:background:srg}, that we can partition the nonterminals of a grammar into equivalence classes based on whether they are reachable from each other. Also recall that a grammar is strongly regular, if for each such equivalence class, all recursive productions of nonterminals contained in it are either left-linear or right-linear.
 
-For determining if a production rule of a given equivalence class is right- or left-linear, all nonterminals that are not part of the class can be considered as terminals. For example a production $A \rightarrow CX$ where $A$ and $C$ are nonterminals in the same equivalence class and $X$ is a nonterminal in another class is left linear because $X$ can be viewed as a terminal.
+For determining if a production rule of a given equivalence class is right- or left-linear, all nonterminals that are not part of the class can be considered as terminals. For example a production $A \rightarrow CX$, where $A$ and $C$ are nonterminals in the same equivalence class, and $X$ is a nonterminal in another class is left linear because $X$ can be viewed as a terminal.
 
 To transform a \ac{cfg} into an \ac{srg}, we only need to transform the sets of mutually recursive nonterminals, where not all productions are either left-linear or right-linear.
 
@@ -265,11 +266,11 @@ Second, replace all productions of $A$ according to the replacement rules shown 
 \caption{Production replacement rules for regular approximation}
 \label{fig:approx:prodreplacement}
 \end{figure}
-Since all newly created productions are right-linear, after applying this transformation to all components where it is required, all components in the grammar either contain only left- or only right-linear productions. Therefore the resulting grammar is strongly regular.
+Since all newly created productions are right-linear, after applying this transformation to all components where it is required, all components in the grammar either contain only left- or only right-linear productions. Therefore, the resulting grammar is strongly regular.
 
 For example, consider a nonterminal $A$ that is part of the currently transformed component and has two productions $A \rightarrow X B$ and $A \rightarrow B X$, again with $B$ being in the same component as $A$ and $X$ in a different component. Here, the first production is right-linear and the second production is left-linear, so the grammar is not strongly regular.
-Now these productions are replaced according to the fourth and fifth rules in Figure \ref{fig:approx:prodreplacement}, which gives us the following productions for $A$: $A \rightarrow XB,\ B' \rightarrow A',\ A \rightarrow B$ and $B' \rightarrow X A'$.
-The new productions of $A$ are all right-linear and therefore the grammar can be strongly regular.
+Now, these productions are replaced according to the fourth and fifth rules in Figure \ref{fig:approx:prodreplacement}, which gives us the following productions for $A$: $A \rightarrow XB,\ B' \rightarrow A',\ A \rightarrow B$ and $B' \rightarrow X A'$.
+The new productions of $A$ are all right-linear and therefore, the grammar can be strongly regular.
 
 \subsubsection{Implementation}
 
@@ -277,7 +278,7 @@ We can again view a grammar as a directed graph as described in Section \ref{sec
 
 The notion of mutual \enquote{reachability}, by which the relation $\mathcal{R}$ defined in Section \ref{sec:background:srg} groups the nonterminals, corresponds to \acp{scc} in this graph view of the grammar.
 
-If two nonterminals $A$ and $B$ are mutually reachable in the graph and therefore part of the same \ac{scc}, there is a sequence of productions to produce $B$ from $A$ and vice versa, which, by definition of $\mathcal{R}$, means they are in the same equivalence class of $\mathcal{R}$.
+If two nonterminals $A$ and $B$ are mutually reachable in the graph and therefore part of the same \ac{scc}, there exists a sequence of productions to produce $B$ from $A$ and vice versa, which, by definition of $\mathcal{R}$, means they are in the same equivalence class of $\mathcal{R}$.
 
 Thus, to approximate a grammar, we view it as a directed graph and find its \acp{scc}, determine the components, where not all productions are of the same linearity and apply the transformation described above to those components.
 
@@ -302,10 +303,10 @@ Note that, for the general algorithm an operation production of form $A \rightar
 Therefore, e.g. an operation production $C \rightarrow op(D)$ with $C$ and $D$ in the same \ac{scc} can no longer occur.
 We provide a detailed description of resolving the effects of the operations in Section \ref{sec:opProduction}.
 
-The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - terminals and nonterminals - and creates an automaton equivalent to the grammar defined by $\alpha$ between those two states.
+The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - i.e. terminals and nonterminals - and creates an automaton equivalent to the grammar defined by $\alpha$ between those two states.
 
 This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ as $q_0$ and a newly created accepting state $f$ as $q_1$.
-
+% TODO algo position 
 \begin{algorithm}[!h]
 	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
 	\label{nederhofAlg}
@@ -356,15 +357,13 @@ This recursive process is started in line \ref{alg:initialCall} with the start n
 		
 	\end{algorithmic}
 \end{algorithm}
-\clearpage
-
 For single terminals and $\epsilon$ the algorithm adds an according edge between the two nodes $q_0$ and $q_1$ in lines \ref{alg:eps} to \ref{alg:singleTerm}.
-Here our implementation differs from the original definition because we allow strings and regular expressions as terminals, whereas usually terminals are single characters. We generalize Nederhof's definition by allowing $a \in \Sigma^*$ instead of just $a \in \Sigma$.
+Here, our implementation differs from the original definition because we allow strings and regular expressions as terminals, whereas usually terminals are single characters. We generalize Nederhof's definition by allowing $a \in \Sigma^*$ instead of just $a \in \Sigma$.
 This changes the type of the generated \ac{nfa} because it contains edges labeled with multi-character strings instead of just single symbols. This generalization is possible, because we use the resulting automaton as an input to the state elimination algorithm to create a regular expression in Section \ref{sec:nfa2regex}. This algorithm uses a generalized \ac{nfa} definition with regular expressions - and therefore also strings - as edge labels. If we want to use the \ac{nfa} directly, we can convert it to a usual \ac{nfa} by replacing an edge labeled with a string of length $n$ with $n$ edges chained together using new intermediate states.
 
 When $\alpha$ contains multiple symbols, a new state $q$ is created and the automaton for the first symbol in $\alpha$ is inserted between $q_0$ and $q$ and the one for the rest of $\alpha$ between $q$ and $q_1$. Note that for our use case the rest of alpha always contains at most 1 nonterminal since our productions have at most 2 nonterminals on their right hand side.
 
-If $\alpha$ consists of just a single terminal $A$, that is not part of any set of mutually recursive nonterminals, so from $A$ there is no sequence of productions to reach $A$ again, we just continue the recursion with the right hand sides of $A$'s productions. The created automaton does not need edges or states corresponding to those single non-recursive nonterminals. 
+If $\alpha$ consists of just a single terminal $A$, that is not part of any set of mutually recursive nonterminals, i.e. from $A$ there is no sequence of productions to reach $A$ again, we just continue the recursion with the right hand sides of $A$'s productions. The created automaton does not need edges or states corresponding to those single non-recursive nonterminals. 
 
 
 \begin{figure}[!h]
@@ -397,15 +396,15 @@ If $\alpha$ consists of just a single terminal $A$, that is not part of any set 
 \end{figure}
 
 
-To explain why this is the case, consider the grammar in Figure \ref{fig:nonrec:grammar} creating just the two words \enquote{$b$} and \enquote{$c$}. Here $A$, $B$ and $C$ are non-recursive nonterminals, so in the initial procedure call with arguments $(q_0, A, q_1)$ there are just the two recursive calls $\textproc{MAKE\_FA}(q_0, B, q_1)$ and $\textproc{MAKE\_FA}(q_0, C, q_1)$ in line \ref{alg:nonrec}. For those calls again the non-recursive case is chosen, such that for the next recursions $\alpha$ equals $b$ or $c$ respectively, which leads to the corresponding edges being created in line \ref{alg:singleTerm}. As demonstrated no edges or states are created for any of the 3 nonterminals, only for the two terminals $a$ and $b$ and the resulting automaton in Figure \ref{fig:nonrec:automaton} accepts the correct language.
+To explain why this is the case, consider the grammar in Figure \ref{fig:nonrec:grammar} creating just the two words \enquote{$b$} and \enquote{$c$}. Here $A$, $B$ and $C$ are non-recursive nonterminals, so in the initial procedure call with arguments $(q_0, A, q_1)$ there are just the two recursive calls $\textproc{MAKE\_FA}(q_0, B, q_1)$ and $\textproc{MAKE\_FA}(q_0, C, q_1)$ in line \ref{alg:nonrec}. For those calls again the non-recursive case is chosen, such that for the next recursions $\alpha$ equals $b$ or $c$ respectively, which leads to the corresponding edges being created in line \ref{alg:singleTerm}. As demonstrated, no edges or states are created for any of the 3 nonterminals, only for the two terminals $a$ and $b$ and the resulting automaton in Figure \ref{fig:nonrec:automaton} accepts the correct language.
 
 For the last remaining case, where $\alpha$ consists of a single nonterminal $A$ that is part of some set of mutually recursive nonterminals $N_i$, the algorithm first adds a new state for each nonterminal in $N_i$ to the graph.
 
-Then we differentiate according to the recursion type of $N_i$, which is obtained by the call to $recursive(N_i)$.
+Then, we differentiate according to the recursion type of $N_i$, which is obtained by the call to $recursive(N_i)$.
 
 Note that sets with neither left nor right recursion can be handled by either case.
 
-Now for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
+Now, for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
 
 \subsubsection{Definition of the case for right recursive components}
 
@@ -417,8 +416,8 @@ To explain the differences between the recursive calls in the different cases, c
 
 The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata being inverted, which has no influence on the accepted language. 
 
-Switching $q_0$ and $q_1$ in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore an edge from $q_3$ to the final state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
-Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
+Switching $q_0$ and $q_1$ in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore, an edge from $q_3$ to the final state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
+Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
 
 
 \begin{figure}[h]
@@ -485,21 +484,21 @@ Accordingly the corresponding $\epsilon$-edges are added in lines \ref{alg:left:
 
 \subsection{Operation Productions}\label{sec:opProduction}
 
-In the following we use the two Java operations \lstinline|reverse| and \lstinline|replace| as examples for operations with different complexities. Note however, that we did not implement the complete list of operations on strings the Java standard library contains. To fully support the standard library, one has to define the transformation described in this section for each operation. 
+In the following, we use the two Java operations \lstinline|reverse| and \lstinline|replace| as examples for operations with different complexities. Note, however, that we did not implement the complete list of operations on strings the Java standard library contains. To fully support the standard library, one has to define the transformation described in this section for each operation. 
 
 As described above, for the Nederhof algorithm, operation productions of form $C \rightarrow op(X)$ are treated like a normal unary production $C \rightarrow X$.
 
 Each operation defines an automaton transformation that changes a given automaton.
 The new automaton accepts the language obtained by applying the operation to each word in the language of the input automaton.
-Consider an operation $replace[old, new]$ corresponding to the Java call \lstinline|s.replace(old, new)|, that returns a copy of the \lstinline|String s|, where each occurrence of the \lstinline|char old| is replaced with the \lstinline|char new|.
+Consider the operation $replace[old, new]$, corresponding to the Java call \lstinline|s.replace(old, new)|, that returns a copy of the \lstinline|String s|, where each occurrence of the \lstinline|char old| is replaced with the \lstinline|char new|.
 The automaton transformation for $replace[old, new]$ traverses the automaton and replaces each occurrence of $old$ on any edge with $new$.
 
 To apply the effect of the different operations onto the created automaton, we first need to find the sub-automata affected by each operation.
 
 To obtain these sub-automata, we taint all nodes and edges if they are created in recursion calls originating from an operation production. 
-If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can then be applied.
+If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can subsequently be applied.
 
-Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here the production $A \rightarrow E$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two similar paths, since $A \rightarrow replace[f,x](F)$ is treated like an $A \rightarrow F$ production analogous to $A \rightarrow E$, just that the resulting edges and adjacent states are tainted.
+Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here, the production $A \rightarrow E$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two similar paths since $A \rightarrow replace[f,x](F)$ is treated like an $A \rightarrow F$ production analogous to $A \rightarrow E$, just that the resulting edges and adjacent states are tainted.
 
 After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
 
@@ -507,7 +506,7 @@ As mentioned above, for the $replace[f,x]$ operation this transformation consist
 
 For regular expressions as edge labels the replace operation is more complex.
 
-For example \Verb@.*@, which is created when we encounter an unknown value like user input, matches all strings, and therefore also strings containing $f$. After applying the $replace[f,x]$ operation to these strings, they can never contain an $f$, so therefore the edge label should match all strings that contain no $f$. This can be implemented using a negative character class, so \Verb@.*@ is transformed to \Verb@[^f]@ by the $replace[f,x]$ operation. Similarly, existing character classes need to be transformed, for example \Verb@[abf]@ to \Verb@[abx]@ and \Verb@[^ab]@ to \Verb@[^abf]@.
+Take \Verb@.*@, for example, which is created when we encounter an unknown value like user input, matches all strings, and therefore also strings containing $f$. After applying the $replace[f,x]$ operation to these strings, they can never contain an $f$, so therefore the edge label should match all strings that contain no $f$. This can be implemented using a negative character class, so \Verb@.*@ is transformed to \Verb@[^f]@ by the $replace[f,x]$ operation. Similarly, existing character classes need to be transformed, for example \Verb@[abf]@ to \Verb@[abx]@ and \Verb@[^ab]@ to \Verb@[^abf]@.
 
 \begin{figure}[h]
 	\begin{minipage}[b]{.3\linewidth}
@@ -572,13 +571,13 @@ For more complex operation transformations like a $reverse$ operation, the opera
 
 Consider the automaton in Figure \ref{fig:reverse:automaton1}, where the colored parts are tainted with the $reverse$ operation.
 
-To apply the reverse operation we first duplicate the tainted sub-automaton and create a new state for each contained state. Here $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
-Now we reverse the direction of all edges in the duplicated sub-automaton.
+To apply the reverse operation, we first duplicate the tainted sub-automaton and create a new state for each contained state. Here, $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
+Now, we reverse the direction of all edges in the duplicated sub-automaton.
 For example, after duplication there was the edge $(q_6, c, q_5)$ because the original automaton had an edge $(q_3,c,q_1)$. This edge is now reversed to give us the edge $(q_5, c, q_6)$ that is present in the final automaton.
 
 After reversing all edges, the sub-automaton is connected back to the rest using new $\epsilon$ edges.
-Finally all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
-In the example automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
+Finally, all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
+In the exemplary automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
 The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 
 \begin{figure}[h]
@@ -647,21 +646,22 @@ The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 
 \section{Automaton to Regular Expression}\label{sec:nfa2regex}
 
-To get a human-readable format for the information we obtained, we transform the automaton we created to a regular expression. Section \ref{sec:stateElimination} describes this conversion and \ref{sec:delgado} presents an optimization we used to improve the results.
+To get a human-readable format for the information we obtained, we transform the automaton we created to a regular expression. Section \ref{sec:stateElimination} describes this conversion while \ref{sec:delgado} presents an optimization we used to improve the results.
 
 \subsection{State elimination}\label{sec:stateElimination}
 
 To transform the automaton we created from an \ac{srg}, we use the state elimination strategy, also known as the Brzozowski-McCluskey procedure \cite{brzozowksi_mccluskey}.
 
 To apply the procedure, an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
-Also a \ac{gnfa} must only have a single start state and a single accepting state \cite{hanGNFA}.
+Also, a \ac{gnfa} must only have a single start state and a single accepting state \cite{hanGNFA}.
 
+% TODO hier To weg
 To achieve this characteristic, one can add a new start state with a single $\epsilon$ transition to the old start state and a new final state with incoming $\epsilon$ edges from all previously accepting states.
 
 However, due to the automaton construction using the Nederhof algorithm described above, the automata we obtain already fulfill this property without any need for further modification.
 We also already use regular expressions as edge labels from the start.
 
-We first replace each pair of edges $(q_0, r_1, q1), (q_0, r_2, q1)$ between two states with a single edge $(q_0, r_1|r_2, q_1)$.
+First, we replace each pair of edges $(q_0, r_1, q1), (q_0, r_2, q1)$ between two states with a single edge $(q_0, r_1|r_2, q_1)$.
 After applying this replacement rule exhaustively, there are no two states $q_0$ and $q_1$ with more than one direct edge between them.
 
 To eliminate a state $q$, we \enquote{shortcut} the state by replacing all pairs of transitions $(q',r, q), (q, t, q'')$ with a new transition from $q'$ to $q''$.

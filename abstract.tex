@@ -11,7 +11,7 @@
 \def\false{0}
 
 
-As more and more aspects of our daily lives move online, the security of online data becomes increasingly important. Injections \textendash{} i.e., the insertion of unwanted strings \textendash{} are among the most common threats to online security. Identifying potential injection vulnerabilities in source code is crucial to preventing this type of attacks. Static analysis tools used for this detection can benefit from precise information about the values of potentially vulnerable strings.
+As more and more aspects of our daily lives move online, the security of online data becomes increasingly important. Injections \textendash{} i.e., the insertion of unwanted strings \textendash{} are among the most common threats to online security. Identifying potential injection vulnerabilities in source code is crucial to preventing this type of attacks. Static analysis tools that try to gain insight into the behavior of programs from their source code and are used for this detection can benefit from precise information about the values of potentially vulnerable strings.
 
 \if\true
 In this thesis, we adapt an approach by Christensen et al. to extract formal grammars that describe strings from a code property graph. 
@@ -22,4 +22,4 @@ We then approximate these grammars to be strongly regular and generate human-rea
 \fi
 
 The obtained regular expressions describe properties of the values the analyzed strings can take on and match all such values.
-We provide a proof of concept implementation and show that it is able to accurately describe complex strings. We believe that with further refinement, the information our approach provides can be used to successfully detect SQL injection vulnerabilities.
+We provide a proof of concept implementation and show that it is able to accurately describe complex strings. We believe that with further refinement, the information our approach provides can be used to successfully detect, for example, SQL injection vulnerabilities.

@@ -1,17 +1,17 @@
 \chapter{Conclusion}\label{chapter:Conclusion}
 
-In this thesis we presented a method to obtain information about the values of strings from the \acl{dfg} of an analyzed program. We provide a proof of concept implementation as an extension of an existing \acl{cpg} implementation used for static analysis.
+In this thesis, we presented a method to obtain information about the values of strings from the \acl{dfg} of an analyzed program. We provide a proof of concept implementation as an extension of an existing \acl{cpg} implementation used for static analysis.
 
-We adapted part of an existing approach to obtain a \acl{srg} from the graph. We then convert this grammar into an automaton using an algorithm we adapted and extended for our use case.
+We adapted part of an existing approach to obtain a \acl{srg} from the graph. We then converted this grammar into an automaton using an algorithm we adapted and extended for our use case.
 Further, this automaton is transformed into a regular expression, which describes the analyzed string. We used approximations of different precision to model the effects of concatenation and other operations on strings.
 
-Additionally we described different methods, like intermediate conversion to a \ac{dfa} and a heuristic for state elimination, to potentially increase the performance of our implementation.
+Additionally, we described different methods, like intermediate conversion to a \ac{dfa} and a heuristic for state elimination, to potentially increase the performance of our implementation.
 
-We also showed that even for complex examples our implementation provides useful results which could be used to detect security vulnerabilities like SQL injections.
+We also showed that, even for complex examples, our implementation provides useful results which could be used to detect security vulnerabilities like SQL injections.
 Furthermore, we tested and benchmarked our implementation using different examples and the well known Juliet test suite, which showed the viability of our performance optimizations and general approach.
 Moreover, we summarized limitations of our implementation and provided starting points for potential further research.
 
-We think that, especially with further enhancements to our implementation, the information our approach provides can be beneficial for static analysis, especially in preventing common security vulnerabilities.
+We think that, especially with further enhancements to our implementation, the information our approach provides can be beneficial for static analysis, especially in the context of preventing common security vulnerabilities.
 
 \begin{comment}	
 Summarize your main contributions and observations. Further research directions?

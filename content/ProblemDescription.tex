@@ -1,7 +1,7 @@
 \chapter{Problem Description}
 \label{chapter:ProblemDescription}
 
-The \ac{cpg} implementation we extend currently has no means of providing information about the structure and contents of string variables that go beyond propagating literals if they are not changed.
+We extend a \ac{cpg} implementation by the Fraunhofer AISEC research institute \cite{cpg}. It currently has no means of providing information about the structure and contents of string variables that go beyond propagating literals if they are not changed.
 
 Describing such strings is not trivial, as often at least part of a given string stems from an unknown source, for example runtime user input.
 We solve this issue by first describing a given string with a formal grammar, which conservatively approximates the values the string can take.
@@ -14,9 +14,9 @@ This approximation poses the challenge of deciding, which information to retain 
 
 Furthermore, since the grammars our approximation creates are not textbook regular grammars, but rather strongly regular grammars, we need to use algorithms suited to this type of grammar for the conversion.
 
-Since we use automata as an intermediary step in the conversion from grammar to regular expression, we use the state elimination algorithm \cite{brzozowksi_mccluskey} to convert a \ac{nfa} to a regular expression. As we want our results to be human-readable, we need to reduce the length of the resulting regular expression by optimizing the state elimination algorithm.
+Because we use automata as an intermediary step in the conversion from grammar to regular expression, we use the state elimination algorithm \cite{brzozowksi_mccluskey} to convert a \ac{nfa} to a regular expression. As we want our results to be human-readable, we need to reduce the length of the resulting regular expression by optimizing the state elimination algorithm.
 \clearpage
-To summarize, the following research questions are posed.
+To summarize, this section poses the following research questions.
 
 \begin{enumerate}[noitemsep]
 	\item What approaches for obtaining information about string values exist?
