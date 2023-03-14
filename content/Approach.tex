@@ -157,11 +157,10 @@ All nonterminals are assigned a character set, containing all characters that ma
 
 We assign a character set to each nonterminal $N$ using a fixed-point iteration inside the graph component of $N$ that constructs a character set $C(N)$ for $N$ from the character sets of the nonterminals on the right hand side of $N$'s productions.
 
-% TODO zu viel Fors
-For productions with terminals on the right hand side, the character set is just the set of all characters occurring in the terminal. For the terminals that are regular expressions, we create the character set when we construct the regular expression. For example for the regular expression representing integers mentioned above, the character set contains all digits and the minus sign.
+For productions with terminals on the right hand side, the character set is just the set of all characters occurring in the terminal. To account for the terminals that are regular expressions and therefore may include meta characters, which should not be included in the character set, we create the character set when we construct the regular expression. Consider, for example, the regular expression representing integers mentioned above. There, the corresponding character set contains all digit characters and the minus sign.
 For concatenation productions like $A \rightarrow BC$ in the example above, we take the union of the character sets of the two nonterminals on the right hand side.
 
-For the example grammar in Figure \ref{fig:charset:grammar}, $B$ represents the word $ba$ and and $C$ represents $ca$, therefore the corresponding sets of characters are  $\{\text{'a', 'b'}\}$ and  $\{\text{'a', 'c'}\}$ respectively. The words that can be generated from $A$ are combinations of $B$ and $C$ and therefore always contain all characters in the character sets of $B$ and $C$. Thus, the character set for $A$ is $\{\text{'a', 'b'}\} \cup \{\text{'a', 'c'}\} = \{\text{'a', 'b', 'c'}\}$.
+Considering the example grammar in Figure \ref{fig:charset:grammar}, $B$ represents the word $ba$ and and $C$ represents $ca$, therefore the corresponding sets of characters are  $\{\text{'a', 'b'}\}$ and  $\{\text{'a', 'c'}\}$ respectively. The words that can be generated from $A$ are combinations of $B$ and $C$ and therefore always contain all characters in the character sets of $B$ and $C$. Thus, the character set for $A$ is $\{\text{'a', 'b'}\} \cup \{\text{'a', 'c'}\} = \{\text{'a', 'b', 'c'}\}$.
 
 Each operation defines a character set transformation - a function $T_{op} : 2^\Sigma \rightarrow 2^\Sigma$ - that approximates how the application of the given operation changes the character set. Here, $\Sigma$ represents the set of all possible characters.
 For example the character set transformation for a \lstinline|replace| operation, where a known character \lstinline|o| is replaced by a known character \lstinline|n| has the character set transformation described in Formula \ref{math:replace:known}.
@@ -196,7 +195,7 @@ The \acp{scc} of a graph form a \ac{dag}, because if the graph of \acp{scc} woul
 Tarjan's algorithm topologically sorts the returned components in reverse order as a byproduct, which is necessary for the fixed-point iteration to terminate.
 During the computation, for a given nonterminal $N$, its charset is updated using the character sets of its successors. The reverse topological ordering of the components ensures that the first handled component is the root in the graph formed by the \acp{scc}, while leafs in this graph are handled last. This ensures that the successors of each nonterminal are either in the same component or in a component that has already been handled earlier.
 
-To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$. Here, $C(X)$ again denotes the character set we assigned to $X$.
+To break up the cycles containing operation productions, we replace one operation production $X \rightarrow op(Y)$ in each cycle with a production $X \rightarrow r$, where $r$ is the regular expression that matches the language $C(X)^*$. Here, $C(X)$ again denotes the character set we assigned to the nonterminal $X$.
 
 To find the cycles in the grammar, we check for each nonterminal $A$ in a given component $M$, whether it has an operation production, and if yes, whether one of the nonterminals on its right-hand side is also part of $M$. If this is the case, by definition of \acp{scc}, $A$ is reachable from this nonterminal and therefore the operation production is part of a cycle.
 
@@ -272,6 +271,7 @@ For example, consider a nonterminal $A$ that is part of the currently transforme
 Now, these productions are replaced according to the fourth and fifth rules in Figure \ref{fig:approx:prodreplacement}, which gives us the following productions for $A$: $A \rightarrow XB,\ B' \rightarrow A',\ A \rightarrow B$ and $B' \rightarrow X A'$.
 The new productions of $A$ are all right-linear and therefore, the grammar can be strongly regular.
 
+\newpage
 \subsubsection{Implementation}
 
 We can again view a grammar as a directed graph as described in Section \ref{sec:charsetApprox}.
@@ -304,9 +304,7 @@ Therefore, e.g. an operation production $C \rightarrow op(D)$ with $C$ and $D$ i
 We provide a detailed description of resolving the effects of the operations in Section \ref{sec:opProduction}.
 
 The $\textproc{MAKE\_FA}$ procedure takes two states $q_0$ and $q_1$ and a sequence $\alpha$ of symbols - i.e. terminals and nonterminals - and creates an automaton equivalent to the grammar defined by $\alpha$ between those two states.
-
-This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ as $q_0$ and a newly created accepting state $f$ as $q_1$.
-% TODO algo position 
+\newpage
 \begin{algorithm}[!h]
 	\caption{Nederhof Algorithm: \ac{srg} $(\Sigma, N, P, S)$ $\rightarrow$ \ac{nfa} $(K,\Sigma, \Delta, s, F)$}
 	\label{nederhofAlg}
@@ -357,6 +355,10 @@ This recursive process is started in line \ref{alg:initialCall} with the start n
 		
 	\end{algorithmic}
 \end{algorithm}
+\clearpage
+
+This recursive process is started in line \ref{alg:initialCall} with the start nonterminal $S$, a newly created initial state $s$ as $q_0$ and a newly created accepting state $f$ as $q_1$.
+
 For single terminals and $\epsilon$ the algorithm adds an according edge between the two nodes $q_0$ and $q_1$ in lines \ref{alg:eps} to \ref{alg:singleTerm}.
 Here, our implementation differs from the original definition because we allow strings and regular expressions as terminals, whereas usually terminals are single characters. We generalize Nederhof's definition by allowing $a \in \Sigma^*$ instead of just $a \in \Sigma$.
 This changes the type of the generated \ac{nfa} because it contains edges labeled with multi-character strings instead of just single symbols. This generalization is possible, because we use the resulting automaton as an input to the state elimination algorithm to create a regular expression in Section \ref{sec:nfa2regex}. This algorithm uses a generalized \ac{nfa} definition with regular expressions - and therefore also strings - as edge labels. If we want to use the \ac{nfa} directly, we can convert it to a usual \ac{nfa} by replacing an edge labeled with a string of length $n$ with $n$ edges chained together using new intermediate states.
@@ -406,7 +408,7 @@ Note that sets with neither left nor right recursion can be handled by either ca
 
 Now, for all productions where the left hand side is a nonterminal in $N_i$, a recursive call depending on the right hand side of the production is performed. 
 
-\subsubsection{Definition of the case for right recursive components}
+\subsubsection{Definition of the Case for Right Recursive Components}
 
 Nederhof only defines the case for left recursion in his publication and states that the else part is \enquote{the converse of the then part} \cite{nederhof}. This suggests that besides switching the condition for the second loop from $C \rightarrow DX_1 \ldots X_m$ to  $C \rightarrow X_1 \ldots X_mD$, switching the order of the states passed to the recursive calls suffices for handling the right recursive case.
 
@@ -414,13 +416,7 @@ However, only changing e.g. $\textproc{MAKE\_FA}(q_0, X_1 \ldots X_m, q_C)$ to $
 
 To explain the differences between the recursive calls in the different cases, consider the grammars in Figures \ref{fig:rec:grammar:left} and \ref{fig:rec:grammar:right} and the corresponding automata in Figures \ref{fig:rec:automaton1} and \ref{fig:rec:automaton2}.
 
-The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata being inverted, which has no influence on the accepted language. 
-
-Switching $q_0$ and $q_1$ in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore, an edge from $q_3$ to the final state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
-Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
-
-
-\begin{figure}[h]
+\begin{figure}[htbp]
 	\begin{minipage}[b]{.45\linewidth}
 		\begin{align*}
 			&A \rightarrow a\\
@@ -434,7 +430,7 @@ Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left
 	\begin{minipage}[b]{.45\linewidth}
 		\begin{tikzpicture}[
 			every initial by arrow/.style = {
-			thick,-stealth
+				thick,-stealth
 			}]
 			\node (q0) [state, initial,
 			initial text = {}] {$q_0$};
@@ -450,7 +446,7 @@ Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left
 		\caption{Resulting automaton for the grammar in Figure \ref{fig:rec:grammar:left}}
 		\label{fig:rec:automaton1}
 	\end{minipage}
-\hfill
+	\hfill
 	\begin{minipage}[b]{.45\linewidth}
 		\begin{align*}
 			&A \rightarrow a\\
@@ -482,6 +478,11 @@ Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left
 	\end{minipage}
 \end{figure}
 
+The inverting of the states in the recursive calls leads to the edges between states $q_2$ and $q_3$ of the automata being inverted, which has no influence on the accepted language. 
+
+Switching $q_0$ and $q_1$ in the recursive calls is what leads to the needed difference in the resulting automata. In the case of the left recursive grammar, any production sequence of $n$ applications of $B \rightarrow Ab$ has to end with replacing the $A$ on the left hand side of the resulting word with the terminal $a$ to finalize the production rule application. This means that each word has to start with $a$, which is realized in the automaton by adding an edge labeled with $a$ from $q_0$ to $q_3$ due to the recursive call in line \ref{alg:left:firstrec}. For the right recursive grammar conversely, each word has to end with an $a$ due to the $b$s being generated on the left hand side of the $A$ in $B \rightarrow bA$. Therefore, an edge from $q_3$ to the final state $q_1$ is being added by the recursive call in line \ref{alg:right:firstrec}.
+Accordingly, the corresponding $\epsilon$-edges are added in lines \ref{alg:left:eps} and \ref{alg:right:eps}.
+
 \subsection{Operation Productions}\label{sec:opProduction}
 
 In the following, we use the two Java operations \lstinline|reverse| and \lstinline|replace| as examples for operations with different complexities. Note, however, that we did not implement the complete list of operations on strings the Java standard library contains. To fully support the standard library, one has to define the transformation described in this section for each operation. 
@@ -498,16 +499,7 @@ To apply the effect of the different operations onto the created automaton, we f
 To obtain these sub-automata, we taint all nodes and edges if they are created in recursion calls originating from an operation production. 
 If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can subsequently be applied.
 
-Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. Here, the production $A \rightarrow E$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two similar paths since $A \rightarrow replace[f,x](F)$ is treated like an $A \rightarrow F$ production analogous to $A \rightarrow E$, just that the resulting edges and adjacent states are tainted.
-
-After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
-
-As mentioned above, for the $replace[f,x]$ operation this transformation consists of replacing all occurrences of $f$ on tainted edges with $x$, which gives us the automaton in Figure \ref{fig:operations:automaton2} for the given example.
-
-For regular expressions as edge labels the replace operation is more complex.
-
-Take \Verb@.*@, for example, which is created when we encounter an unknown value like user input, matches all strings, and therefore also strings containing $f$. After applying the $replace[f,x]$ operation to these strings, they can never contain an $f$, so therefore the edge label should match all strings that contain no $f$. This can be implemented using a negative character class, so \Verb@.*@ is transformed to \Verb@[^f]@ by the $replace[f,x]$ operation. Similarly, existing character classes need to be transformed, for example \Verb@[abf]@ to \Verb@[abx]@ and \Verb@[^ab]@ to \Verb@[^abf]@.
-
+Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. 
 \begin{figure}[h]
 	\begin{minipage}[b]{.3\linewidth}
 		\begin{align*}
@@ -546,7 +538,7 @@ Take \Verb@.*@, for example, which is created when we encounter an unknown value
 	\hfill
 	\begin{minipage}[b]{.3\linewidth}
 		\begin{tikzpicture}[
-		every initial by arrow/.style = {
+			every initial by arrow/.style = {
 				thick,-stealth
 			}]
 			\node (q0) [state, initial, initial where=above,
@@ -567,18 +559,19 @@ Take \Verb@.*@, for example, which is created when we encounter an unknown value
 	\end{minipage}
 \end{figure}
 
+Here, the production $A \rightarrow E$ leads to the creation of the left path including state $q_2$, while for the operation production $A \rightarrow replace[f,x](F)$ the subsequent algorithm calls create the colored path. All colored edges and states are tainted with the $replace$ operation. The created \ac{nfa} has two similar paths since $A \rightarrow replace[f,x](F)$ is treated like an $A \rightarrow F$ production analogous to $A \rightarrow E$, just that the resulting edges and adjacent states are tainted.
+
+After completing the \ac{nfa} creation, we can collect all tainted nodes and apply the automaton transformation defined by $replace[f,x]$ to this sub-automaton consisting of the states $q_0$, $q_3$ and $q_1$.
+
+As mentioned above, for the $replace[f,x]$ operation this transformation consists of replacing all occurrences of $f$ on tainted edges with $x$, which gives us the automaton in Figure \ref{fig:operations:automaton2} for the given example.
+
+For regular expressions as edge labels the replace operation is more complex.
+
+Take \Verb@.*@, for example, which is created when we encounter an unknown value like user input, matches all strings, and therefore also strings containing $f$. After applying the $replace[f,x]$ operation to these strings, they can never contain an $f$, so therefore the edge label should match all strings that contain no $f$. This can be implemented using a negative character class, so \Verb@.*@ is transformed to \Verb@[^f]@ by the $replace[f,x]$ operation. Similarly, existing character classes need to be transformed, for example \Verb@[abf]@ to \Verb@[abx]@ and \Verb@[^ab]@ to \Verb@[^abf]@.
+
 For more complex operation transformations like a $reverse$ operation, the operation transformation also includes adding and removing states and edges of the automaton.
 
 Consider the automaton in Figure \ref{fig:reverse:automaton1}, where the colored parts are tainted with the $reverse$ operation.
-
-To apply the reverse operation, we first duplicate the tainted sub-automaton and create a new state for each contained state. Here, $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
-Now, we reverse the direction of all edges in the duplicated sub-automaton.
-For example, after duplication there was the edge $(q_6, c, q_5)$ because the original automaton had an edge $(q_3,c,q_1)$. This edge is now reversed to give us the edge $(q_5, c, q_6)$ that is present in the final automaton.
-
-After reversing all edges, the sub-automaton is connected back to the rest using new $\epsilon$ edges.
-Finally, all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
-In the exemplary automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
-The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 
 \begin{figure}[h]
 	\begin{minipage}[b]{.2\linewidth}
@@ -644,18 +637,26 @@ The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
 \end{figure}
 
 
+To apply the reverse operation, we first duplicate the tainted sub-automaton and create a new state for each contained state. Here, $q_4$ is created for $q_0$, $q_5$ is created for $q_1$ and $q_6$ is created for $q_3$. We also duplicate all tainted edges alongside the states.
+Now, we reverse the direction of all edges in the duplicated sub-automaton.
+For example, after duplication there was the edge $(q_6, c, q_5)$ because the original automaton had an edge $(q_3,c,q_1)$. This edge is now reversed to give us the edge $(q_5, c, q_6)$ that is present in the final automaton.
+
+After reversing all edges, the sub-automaton is connected back to the rest using new $\epsilon$ edges.
+Finally, all tainted edges between the original states are removed together with all states that are not connected to the automaton anymore after this step.
+In the exemplary automata, after removing the tainted edges, $q_3$ is disconnected from all other states and therefore removed.
+The resulting automaton can be seen in Figure \ref{fig:reverse:automaton2}.
+\newpage
 \section{Automaton to Regular Expression}\label{sec:nfa2regex}
 
 To get a human-readable format for the information we obtained, we transform the automaton we created to a regular expression. Section \ref{sec:stateElimination} describes this conversion while \ref{sec:delgado} presents an optimization we used to improve the results.
 
-\subsection{State elimination}\label{sec:stateElimination}
+\subsection{State Elimination}\label{sec:stateElimination}
 
 To transform the automaton we created from an \ac{srg}, we use the state elimination strategy, also known as the Brzozowski-McCluskey procedure \cite{brzozowksi_mccluskey}.
 
-To apply the procedure, an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
+In order to apply the procedure, an automaton is first transformed into a \ac{gnfa}. A \ac{gnfa} is an \ac{nfa} where the edges are labeled with regular expressions instead of single symbols.
 Also, a \ac{gnfa} must only have a single start state and a single accepting state \cite{hanGNFA}.
 
-% TODO hier To weg
 To achieve this characteristic, one can add a new start state with a single $\epsilon$ transition to the old start state and a new final state with incoming $\epsilon$ edges from all previously accepting states.
 
 However, due to the automaton construction using the Nederhof algorithm described above, the automata we obtain already fulfill this property without any need for further modification.
@@ -671,7 +672,7 @@ Figures \ref{fig:stateelim:rule2} and \ref{fig:stateelim:rule3} contain examples
 
 After repeatedly applying the two rules and eliminating all other states, the resulting automaton contains only the start and the end state. The single edge between those two states then has the resulting regular expression as a label.
 
-\begin{figure}
+\begin{figure}[htbp]
 	\centering
 	\begin{tikzpicture}
 		every initial by arrow/.style = {
@@ -691,7 +692,7 @@ After repeatedly applying the two rules and eliminating all other states, the re
 	\label{fig:stateelim:rule2}.
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htbp]
 	\centering
 	\begin{tikzpicture}
 		every initial by arrow/.style = {
@@ -729,7 +730,7 @@ After repeatedly applying the two rules and eliminating all other states, the re
 	\label{fig:stateelim:rule3}.
 \end{figure}
 
-\subsection{Delgado heuristic}\label{sec:delgado}
+\subsection{Delgado Heuristic}\label{sec:delgado}
 
 The resulting regular expressions often do not have minimal length, but there exists no efficient algorithm that always produces optimal regular expressions.
 

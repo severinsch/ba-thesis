@@ -23,9 +23,9 @@ In the context of this thesis, $\Sigma$ is the set of characters making up the s
 To define grammars in examples, we use the notation $X \rightarrow Y$ to specify a production rule to transform some $X$ to some $Y$.
 We use capital letters for nonterminals and lowercase letters for terminals. We also do not specify the start symbol explicitly, but rather the nonterminal on the left hand side of the first given production is considered to be the start symbol.
 
-\Acfp{cfg} are grammars, in which the left hand side of all productions consists of a single nonterminal. The set of production rules for \acp{cfg} therefore is defined as $N \rightarrow (\Sigma \cup N)^*$ compared to the general definition above.
+\Acfp{cfg} are grammars, where the left hand side of all productions consists of a single nonterminal. The set of production rules for \acp{cfg} therefore is defined as $N \rightarrow (\Sigma \cup N)^*$ compared to the more general definition above.
 
-Regular grammars are a subset of \acp{cfg}, in which the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. 
+Regular grammars are a subset of \acp{cfg}, where the right hand side of each production consists either of a single terminal $a \in \Sigma$ or of exactly one nonterminal and one terminal. Additionally, the nonterminals on the right hand side are either always the first symbol or always the last symbol on the right hand side. 
 
 Therefore, for example, a grammar containing both the productions $A \rightarrow aB$ and $B \rightarrow Ab$ with $A, B \in N \land a, b \in \Sigma$ is not regular. Here, the nonterminal is the last symbol in the first production but the first symbol in the latter, which does not comply with the above rule.
 
@@ -40,9 +40,10 @@ $\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$
 Here, $V$ is $\Sigma \cup N$, i.e. the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. $A \xrightarrow{*} \alpha B \beta$ means, that there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore, $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, in which each nonterminal in a class can be produced by each other nonterminal in the class. Those nonterminals are called mutually recursive.
 
 A grammar is strongly regular iff the production rules in each such equivalence class are either all right-linear or left-linear.
-
 A production rule is right-linear iff it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
+
 \Aclp{srg} are guaranteed to generate regular languages \cite{mohri_nederhof}.
+Despite the potentially misleading name, strongly regular grammars are not a subclass of regular grammars but rather an extension to them. Every strongly regular grammar is regular, but not vice versa.
 
 \section{Automata}\label{sec:background:automata}
 
@@ -94,21 +95,42 @@ Users of the library can extend its functionality by adding additional passes.
 
 While the \ac{cpg} contains many different types of edges, the most relevant edge type for this thesis is data flow edges, which represent the data flow between different expressions.
 
-\begin{lstlisting}[label={lst:stringCreation}, caption={\ac{cpg} example code}, captionpos=b, numbers=right]
-	String s = "xyz";
-	System.out.println(s);
+\begin{lstlisting}[label={lst:stringCreation}, caption={\ac{cpg} example code}, captionpos=b, numbers=right, escapeinside={(*}{*)}]
+	String s(*\textcolor{red}{$^1$}*) = "xyz";
+	System.out.println(s(*\textcolor{red}{$^2$}*));
 \end{lstlisting}
 
 Consider the short code example in Listing \ref{lst:stringCreation}. Here, among others, the following nodes are part of the \ac{cpg}:
 
 \begin{itemize}
 	\item \lstinline|Literal|, representing the string literal \lstinline{"xyz"} in line 1
-	\item \lstinline|VariableDeclaration|, representing the declaration and initialization of the variable \lstinline|s| in line 1
-	\item \lstinline|DeclaredReferenceExpression|, representing the reference to the variable \lstinline|s| in line 2
+	\item \lstinline|VariableDeclaration|, representing the declaration and initialization of \lstinline|s| in line 1
+	\item \lstinline|DeclaredReferenceExpression|, representing the reference to \lstinline|s| in line 2
 \end{itemize}
 
 In this example, the data flows from the \lstinline|Literal| node to the \lstinline|VariableDeclaration| and from there to the \lstinline|DeclaredReferenceExpression|.
 
-The nodes connected by those edges effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values.
+The nodes connected by those edges effectively form a subgraph of the \ac{cpg}, the \ac{dfg}, from which we then extract the information on string values. Figure \ref{fig:cpg} shows this part of the \ac{cpg}. 
+
+\begin{figure}[htbp]
+	\centering
+	\begin{tikzpicture}[ >=stealth,
+		node distance=1.5cm]
+		\node (literal) [state] {xyz};
+		\node (vardec) [state, right = of literal] {\lstinline|s|\textcolor{red}{$^1$}};
+		\node (decref) [state, right = of vardec] {\lstinline|s|\textcolor{red}{$^2$}};
+		\node (literalDesc) [above left = of literal, xshift=1cm] {\lstinline|Literal|};
+		\node (vardecDesc) [below = of vardec, yshift=0.5cm] {\lstinline|VariableDeclaration|};
+		\node (decrefDesc) [above right = of decref, xshift=-1cm, align=left] {\lstinline|DeclaredReference-|\\\lstinline|Expression|};
+		\draw[dashed] (literal) -- (literalDesc.east);
+		\draw[dashed] (vardec) -- (vardecDesc);
+		\draw[dashed] (decref) -- (decrefDesc.west);
+		\path [-stealth, thick] 
+		(literal) edge node[above] {\ac{dfg}}   (vardec)
+		(vardec) edge node[above] {\ac{dfg}}   (decref);
+	\end{tikzpicture}
+	\caption{Part of the \ac{cpg} for the code in Listing \ref{lst:stringCreation}}
+	\label{fig:cpg}
+\end{figure}
 
 

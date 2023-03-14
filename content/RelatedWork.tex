@@ -4,7 +4,7 @@
 In this section we present other work related to this thesis. We first discuss work related to the analysis of string properties in Section \ref{sec:related:stringproperty}, which is where our implementation fits in. We also include other applications of such analyses. Further, we present different approaches utilizing such methods for the specific application of detecting SQL injection vulnerabilities in Section \ref{sec:related:stringPropertySql}. Additionally, in Section \ref{sec:related:otherSQL} we introduce other techniques not closely related to the string properties for detecting such vulnerabilities.
 
 
-\section{String property analysis}\label{sec:related:stringproperty}
+\section{String Property Analysis}\label{sec:related:stringproperty}
 
 Our approach partially follows the approach by Christensen et al. \cite{brics}. The authors construct a \acl{cfg} from a flow graph, but instead of creating it on-demand, starting at the chosen hotspot node like we do, they consider the total flow graph for grammar creation.
 As the total amount of potential hotspots can be far greater than the number of actual points of interest, this total grammar may be potentially significantly larger than needed. This increased size reduces the performance of the subsequent steps.
@@ -18,7 +18,6 @@ To use the presented approach in practice an efficient algorithm for type checki
 The given paper does not include these, but rather indicates several problems in constructing such algorithms for the given situation without losing some of the desired preciseness.
 The authors mention that using standard type reconstruction by constraint solving for the proposed type system is impossible due to limitations of regular languages.
 Additionally, this approach is tailored to the mentioned calculus and utilizes specific features like pattern matching, which would make adapting it to our use case more difficult.
-
 The additional layer of abstraction introduced by the \ac{dfg} used in the approach we chose eliminates this problem and makes adaptation easier.
 
 Kirkegaard et al. present a XML transformation system, $\text{X}_{\text{ACT}}$, that functions as a part of the JWIG framework developed by Christensen et al.'s research group \cite{xact}. This system statically verifies the validity of XML transformations by tracking sets of XML values during dataflow analyses.
@@ -27,7 +26,7 @@ Both of these tools use basic analyses of string values for the purpose of valid
 
 There exist frameworks to model different analyses using set constraints, for example the BANSHEE toolkit by Kodumal and Aiken \cite{banshee}. BANSHEE allows the user to define a specification of the used constraints, from which a constraint resolution engine is built. Using such a generic framework, different analyses based on constraint resolution can be created, for example pointer analysis or \ac{cfl} reachability. However, Christensen et al. argue that some operations of their, and by extension our approach, cannot be captured by the constraint operators \cite{brics}.
 
-\section{String property analysis used for SQL injection vulnerability detection}\label{sec:related:stringPropertySql}
+\section{String Property Analysis Used for SQL Injection Vulnerability Detection}\label{sec:related:stringPropertySql}
 
 Gould et al. \cite{gould2004static} build on the work of Christensen et al. and use the obtained automata for further analysis of SQL queries. They use a context-free language reachability algorithm to validate the semantic correctness of SQL queries. For this analysis, they also include the grammar of the SQL language for scoping information and the database schema for type checking.
 The authors show that their tool can precisely detect errors in SQL queries. However, they currently do not detect SQL injection vulnerabilities, but rather only assess the semantic correctness and type safety of the queries.
@@ -38,9 +37,8 @@ During runtime, the monitor can now check the dynamically generated queries agai
 As our approach is able to produce \acp{dfa} for the analyzed code as well, the previous approaches could theoretically be adapted to our implementation.
 
 Wassermann and Su \cite{sqli_wassermann_su} present an approach comparable to ours, where they also characterize values of string variables using context free grammars. They specifically target SQL injection vulnerabilities by tracking user-modifiable data and using the generated \acp{cfg} to check whether this data can change the syntactic structure of a query. While this approach is successful in detecting those vulnerabilities, our approach is more general and not focused on detecting one specific type of problem, but rather on providing general information for unspecified further use.
-% TODO mehr infor dazu
 
-\section{Other approaches for SQL injection vulnerability detection}\label{sec:related:otherSQL}
+\section{Other Approaches for SQL Injection Vulnerability Detection}\label{sec:related:otherSQL}
 
 Livshits and Lam present an approach for vulnerability detection based on taint propagation \cite{livshits2005}.
 Taint propagation involves finding all sinks derivable from sources via some given derivation rules. In the context of vulnerability detection, for example, a function that extracts some user input from a request is a source, while an SQL query execution function is a sink. A sink is flagged as potentially vulnerable if it is derivable from a potentially malicious source via some set of derivation rules. The authors use a precise points-to analysis to find paths that allow unsanitized data to flow into e.g. SQL queries.
@@ -49,7 +47,7 @@ The authors show that their approach successfully detects previously unknown sec
 
 Another comparable approach by Halfond et al. uses positive tainting \cite{wasp}. Their implementation tracks trusted strings rather than untrusted ones and allows only tainted strings in queries. The authors argue that this approach is especially suited for preventing SQL injection attacks, as due to the positive tainting incompleteness in the analysis leads to false positives, which can be filtered, instead of false negatives. They show that their implementation of this approach successfully and efficiently detects all tested SQL injection vulnerabilities without false positives.
 
-\section{Overview of the different approaches}
+\section{Overview of the Different Approaches}
 
 In Table \ref{tab:relatedWorkComparison} we provide an overview of the presented approaches and their respective differences. Here, JSA is used as an abbreviation for \enquote{Java String Analyzer}, the implementation of their approach by Christensen et al., DB for database and PoC for proof of concept. Generally the presented work can be categorized into two groups, with generic approaches that aim to provide information and capabilities for different analyses building on them (\cite{brics,banshee,regex_types}) on the one hand side. The other publications try to solve specific problems like preventing SQL injection attacks, sometimes using the aforementioned analysis techniques as a foundation (\cite{gould2004static,amnesia,wasp,xduce,xact,livshits2005,sqli_wassermann_su}). Our work could be categorized into the first group.
 
