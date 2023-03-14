@@ -37,7 +37,7 @@ $\mathcal{R}$ is the equivalence relation defined on the set of nonterminals $N$
 	A \mathcal{R} B \Leftrightarrow (\exists \alpha, \beta \in V^* : A \xrightarrow{*} \alpha B \beta) \land (\exists \alpha, \beta \in V^* : B \xrightarrow{*} \alpha A \beta) 
 \end{align}
 
-Here, $V$ is $\Sigma \cup N$, i.e. the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. In other words, iff $A \xrightarrow{*} \alpha B \beta$, there exists a sequence of productions starting at the symbol $A$ to produce a set of symbols that contain $B$. Therefore, $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, in which each nonterminal in a class can be produced by each other nonterminal in the class. These nonterminals are called mutually recursive.
+Here, $V$ is $\Sigma \cup N$, i.e. the set of all symbols, terminal and nonterminal. $\xrightarrow{*}$ is the reflexive and transitive closure of the production relation $\rightarrow$ defined by the set of productions in the grammar. In other words, iff $A \xrightarrow{*} \alpha B \beta$, there exists a sequence of productions starting at the nonterminal $A$ to produce a set of symbols that contain $B$. Therefore, $\mathcal{R}$ groups all nonterminals into disjoint equivalence classes, in which each nonterminal in a class can be produced by each other nonterminal in the class. These nonterminals are called mutually recursive.
 
 A grammar is strongly regular iff the production rules in each such equivalence class are either all right-linear or left-linear.
 A production rule is right-linear iff it is of the form $A \rightarrow w \alpha$, where $w$ is a sequence of terminal symbols and $\alpha$ is empty or a single nonterminal symbol. Left-linear productions are defined accordingly but the nonterminal is on the left side of the production result.
@@ -121,7 +121,7 @@ The nodes connected by those edges effectively form a subgraph of the \ac{cpg}, 
 		\node (decref) [state, right = of vardec] {\lstinline|s|\textcolor{red}{$^2$}};
 		\node (literalDesc) [above left = of literal, xshift=1cm] {\lstinline|Literal|};
 		\node (vardecDesc) [below = of vardec, yshift=0.5cm] {\lstinline|VariableDeclaration|};
-		\node (decrefDesc) [above right = of decref, xshift=-1cm, align=left] {\lstinline|DeclaredReference-|\\\lstinline|Expression|};
+		\node (decrefDesc) [above right = of decref, xshift=-1cm, align=left, text width=1.5cm] {\lstinline|DeclaredReference-|\\\lstinline|Expression|};
 		\draw[dashed] (literal) -- (literalDesc.east);
 		\draw[dashed] (vardec) -- (vardecDesc);
 		\draw[dashed] (decref) -- (decrefDesc.west);
