@@ -8,17 +8,17 @@
 	\toprule
 	\thead{Method} & \thead{Automaton\\Size\\(states,\\transitions)} & \thead{Expression\\length} & \thead{Regular expression}
 	\\ \toprule
-	\makecell{NFA} & 40, 51 & 315 & \hfill\vspace{-2\baselineskip}
+	\makecell{\ac{nfa}} & 40, 51 & 315 & \hfill\vspace{-2\baselineskip}
 	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
 (((((\Q(\E)?(\Q(\E)*\Q(\E|\Q(\E)?(0|(-?[1-9][0-9]*)))(([*+])(0|(-?[1-9][0-9]*))))((\Q)\E[*+])(0|(-?[1-9][0-9]*)))*(((\Q)\E[*+])(0|(-?[1-9][0-9]*)))((\Q)\E[*+])(0|(-?[1-9][0-9]*)))*\Q)\E|\Q)\E))|((((\Q(\E)?(\Q(\E)*\Q(\E|\Q(\E)?(0|(-?[1-9][0-9]*)))((([*+])(0|(-?[1-9][0-9]*)))((\Q)\E[*+])(0|(-?[1-9][0-9]*)))*\Q)\E)?)
 	\end{Verbatim}
 	\\ \midrule
-	\makecell{DFA} & 6, 10 & 176 & \hfill\vspace{-2\baselineskip}
+	\makecell{\ac{dfa}} & 6, 10 & 176 & \hfill\vspace{-2\baselineskip}
 	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
 (((\Q(\E(\Q(\E)*(0|(-?[1-9][0-9]*))|0|(-?[1-9][0-9]*))[*+])(((0|(-?[1-9][0-9]*))\Q)\E)[*+])*(((0|(-?[1-9][0-9]*))\Q)\E)))|((\Q(\E(\Q(\E)*(0|(-?[1-9][0-9]*))|0|(-?[1-9][0-9]*)))
 	\end{Verbatim}
 	\\ \midrule
-	\makecell{minimized\\DFA} & 4, 6 & 62 & \hfill\vspace{-2\baselineskip}
+	\makecell{minimized\\\ac{dfa}} & 4, 6 & 62 & \hfill\vspace{-2\baselineskip}
 	\begin{Verbatim}[breaklines=true,breakanywhere=true,fontsize=\small]
 ((\Q(\E)*(0|(-?[1-9][0-9]*)))([*+]((0|(-?[1-9][0-9]*))\Q)\E))*
 	\end{Verbatim}
@@ -28,10 +28,10 @@
 \label{tab:trickyResults}
 \end{table}
 \newpage
-\subsubsection{Tricky NFA}
+\subsubsection{Tricky \ac{nfa}}
 \begin{figure}[ht!]
 	\centering
 	\includedot[scale=0.25]{dot/tricky_nfa}
-	\caption{NFA created from the Tricky example from Section \ref{sec:eval:quality:tricky}}
+	\caption{\ac{nfa} created from the Tricky example from Section \ref{sec:eval:quality:tricky}}
 	\label{fig:appendix:trickyNFA}
 \end{figure}

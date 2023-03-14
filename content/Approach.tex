@@ -8,7 +8,7 @@ We first provide a general overview of our approach and describe which steps are
 \section{General Approach}
 
 The general approach for our implementation is adapted from the one described by Christensen et al. \cite{brics}. Conceptually, we first create a \acf{cfg} from the \ac{dfg} in the process described in Section \ref{sec:grammarCreation}.
-The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into an \acf{nfa} using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, in Section \ref{sec:nfa2regex} we describe how to create a regular expression from this automaton using the state elimination strategy. Figure \ref{fig:approach} visualizes this process and the different steps from a graph to different types of formal grammars to a regular expression.
+The created \ac{cfg} is then approximated to a \acf{srg} using the Character Set Approximation described in Section \ref{sec:charsetApprox} and the Mohri-Nederhof algorithm described in Section \ref{sec:mohriNederhofApprox}. We then transform this \ac{srg} into a \acf{nfa} using Nederhof's algorithm described in Section \ref{sec:nederhofAlgorithm}. Finally, we describe how to create a regular expression from this automaton using the state elimination strategy in Section \ref{sec:nfa2regex}. The following diagram visualizes this process and the different steps from a graph to different types of formal grammars to a regular expression.
 
 
 \tikzstyle{grammar} = [
@@ -95,7 +95,7 @@ The different types of productions we use can be seen in Table \ref{tab:producti
 		\makecell{\lstinline|OperationProduction|} & \makecell{$X \rightarrow op(Y)$} & \makecell{operations on strings} \\
 		\bottomrule
 	\end{tabular}
-	\caption{Production types we use}
+	\caption{Utilized production types}
 	\label{tab:productions}
 \end{table}
 
@@ -124,10 +124,10 @@ This language agnostic representation of string operations allows developers of 
 
 Unlike Christensen et al. \cite{brics}, we do not consider the total \ac{dfg} when extracting the grammar. They parse the whole graph into a grammar describing all nodes, while we create the grammar starting from a single node and ignore all parts of the graph not connected via \ac{dfg} edges to this node.
 
-Since often the majority of a large program is not relevant for a specific node, this reduces the amount of nodes we need to handle during analysis. Consequently, this reduces the size of the resulting grammar, therefore leading to performance improvements.
+Since the majority of a large program is often not relevant for a specific node, this reduces the amount of nodes we need to handle during analysis. Consequently, this reduces the size of the resulting grammar, therefore leading to performance improvements.
 
 Additionally, we can traverse the \ac{dfg} conditionally, stopping at nodes representing numbers. If the traversal reaches such a node, we use an existing analysis that tries to compute the precise value.
-For example, for an integer created by usual arithmetic operations, this analysis can obtain the resulting value.
+For example, for an integer created by the usual arithmetic operations, this analysis can obtain the resulting value.
 In this case, we can add a \lstinline|TerminalProduction| with the \lstinline|Terminal| representing the value literal and otherwise, if the value is not known, the \lstinline|Terminal| contains a regular expression matching all numbers of the present type, e.g. \lstinline{"0|(-?[1-9][0-9]*)"} for integrals.
 	
 
@@ -497,7 +497,7 @@ The automaton transformation for $replace[old, new]$ traverses the automaton and
 To apply the effect of the different operations onto the created automaton, we first need to find the sub-automata affected by each operation.
 
 To obtain these sub-automata, we taint all nodes and edges if they are created in recursion calls originating from an operation production. 
-If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can subsequently be applied.
+If a recursive call of the Nederhof algorithm $\textproc{MAKE\_FA}(q_0, X, q_C)$ in line \ref{alg:left:firstrec} is caused by an operation production $C \rightarrow op_1(X)$, we pass $op_1$ as a taint to the recursive call. All edges and states created further down this recursion path will be tainted with $op_1$. In the resulting \ac{nfa}, for each operation that is part of the given grammar, there's a set of tainted nodes and edges representing the parts of the automaton affected by this operation. These sets each form a sub-automaton of the \ac{nfa}, onto which the transformation of the corresponding operation can subsequently be applied.
 
 Consider the grammar in Figure \ref{fig:operations:grammar} and the corresponding automaton in Figure \ref{fig:operations:automaton1}. 
 \begin{figure}[h]
@@ -741,7 +741,7 @@ However, we can still improve the result we obtain using the state elimination m
 The order in which states are eliminated affects the size of the resulting regular expression. There exist different heuristics for choosing an elimination order to reduce the expression size.
 
 We chose a heuristic described by Delgado and Morais \cite{delgado}.
-For each state a weight is calculated using Formula \ref{form:delgado}, where $In_q$ is the set of incoming edges of $q$, $Out_q$ the set of outgoing edges, $W_e$ the size of the label on any edge $e$. $Out_q$ and $In_q$ both do not contain a potential loop on $q$. $W_{loop}$ is the size of the loop around $q$ if it exists and $0$ otherwise. 
+For each state a weight is calculated using Formula \ref{form:delgado}, where $In_q$ is the set of incoming edges of the state $q$, $Out_q$ the set of outgoing edges, $W_e$ the size of the label on any edge $e$. $Out_q$ and $In_q$ both do not contain a potential loop on $q$. $W_{loop}$ is the size of the loop around $q$ if it exists and $0$ otherwise. 
 
 \begin{equation}
 	\begin{aligned}

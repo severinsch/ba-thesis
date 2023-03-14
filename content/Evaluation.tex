@@ -15,7 +15,7 @@ We analyze the resulting regular expressions for two synthetic code examples, na
 
 \subsubsection{Tricky}\label{sec:eval:quality:tricky}
 
-We adapted the \enquote{Tricky} example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages cannot count the occurrences of characters, a normal regular expression describing those strings can not guarantee for example an equal amount of opening and closing brackets. Therefore, a good description using regular languages would for example be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
+We adapted the \enquote{Tricky} example code Christensen et al. \cite{brics} created for their implementation, which can be seen in Listing \ref{lst:tricky}. It creates strings of the form \lstinline|((((((((8*7)*6)*5)+4)+3)+2)+1)+0)|. Since regular languages cannot count the occurrences of characters, a normal regular expression describing those strings can not guarantee, for example, an equal amount of opening and closing brackets. Therefore, a good description using regular languages would, for example, be \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@, where \Verb|<int>| abbreviates the expression \Verb@0|(-?[1-9][0-9]*)@.
 
 We create the grammar starting at the node representing the variable reference \lstinline|res| in line \ref{lst:tricky:sout}.
 After the regular approximation the resulting grammar contains 51 nonterminals and 59 productions.
@@ -26,7 +26,7 @@ The \acp{nfa} created using Nederhof's algorithm in general often have unnecessa
 
 Christensen et al. describe the language they obtained with the expression \Verb|\(*<int>([+*]<int>\))*| \cite{brics}. Note that Christensen et al. only create automata and not regular expressions, so this expression is just to describe their created automaton. How their automaton compares to ours is unclear, as they only share this description of the language. We still use  their short regular expression as a comparison for our results, both for correctness of the language we accept and size of the expressions.
 
-With a length of 315 characters, the regular expression we obtain is more complex than necessary, but it accepts the same language as the one given by Christensen et al.. 
+With a length of 315 characters, the regular expression we obtain is more complex than necessary, but it accepts the same language as the one Christensen et al. gave. 
 The high complexity stems from many optional cases in the expression, which could either be combined into one case or which accept a subset of another option already present in the expression.
 However, this length is for a sub-optimal scenario, and can be improved as we describe in the following.
 
@@ -180,8 +180,8 @@ While the interpretation and analysis of the obtained expressions is out of scop
 
 Further, we measured the execution time of the different steps in our analysis approach. 
 We measured the steps separately to observe the relative differences between the individual steps and the effects of the optimizations we described. Execution times naturally depend on the machine used to run the analysis. We used a common desktop computer\footnote{Intel i7-3770K (8 cores) @ 4.100GHz with 16 GB RAM running Arch Linux 6.1} for the benchmarks.
-As in the previous section we considered the two synthetic examples and the test cases of the Juliet test suite. 
-% TODO präsens?
+Like in the previous section, we considered the two synthetic examples and the test cases of the Juliet test suite.
+
 In the following, all mentioned averages are truncated means, which means that before calculating the mean, first the highest $n\%$ and the lowest $n\%$ of values are discarded. This type of truncation is a common method to increase the robustness of the mean, usually with values for n ranging from 10 to 20\% \cite{krenel}. In our benchmarks we use 20\% for this cutoff value. This method eliminates the effect of statistical outliers which do not represent an actual measurement but e.g. are influenced by an external factor like CPU scheduling, caching or other unknown influences. For example, when running our benchmarks using JUnit tests, the first test case had the highest durations for all steps including grammar creation, approximation and automaton creation by a factor of 10-20 for some inputs. This effect occurred even when repeatedly testing the same input. Such outliers would skew our measurements and therefore are disregarded for the analysis.
 
 \begin{figure}[H]
@@ -242,7 +242,7 @@ In the following, all mentioned averages are truncated means, which means that b
 
 Consider the Figures \ref{fig:eval:plot:tricky} and \ref{fig:eval:plot:trickyDFA}. 
 The plots show the durations of each step in the process from \ac{cpg} to regular expression. 
-For the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 300 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
+For the second plot, we additionally transform the created \ac{nfa} to a \ac{dfa} before we create the regular expression, whereas in the first plot, the \ac{nfa} is converted directly. As visualized by this plot, the \ac{dfa} creation adds an additional 315 $\mu s$ to transform the automaton, but drastically reduces the time the state elimination algorithm takes to create a regular expression.
 
 For both plots we averaged the measurements of 100 runs after we trimmed the highest and lowest 20\% of values.
 
@@ -355,7 +355,7 @@ Also note that the relative execution times of the different steps are fairly co
 We have to note that all examples we used to test our implementation are synthetic examples. This is due to the fact that we currently only support a small subset of the Java language, which is not enough to obtain meaningful results from real code. It is unclear how closely the used examples resemble most actual application code and to what extent the observations we made can be transferred to real world use.
 
 However, looking at recent vulnerability reports in the form of CVEs\footnote{https://www.cve.org/} suggests that comparatively simple SQL injection vulnerabilities still occur in real applications. For example, consider the entry CVE-2022-45932\footnote{https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2022-45932} for a vulnerability in the OpenDaylight\footnote{https://www.opendaylight.org/} project.
-Listing \ref{lst:opendaylight:vulnerable} shows an excerpt of the vulnerable code, where the \lstinline|deleteRole| function handles a call to an API endpoint and \lstinline|roleid| is the user input. Here this user input is insufficiently escaped using an HTML escapement utility provided by Apache, that effectively replaces all characters that cannot be displayed in plain HTML. The single quote character however is not changed by this escapement, which allows e.g. the malicious \lstinline|"' or 1=1--| as a value of \lstinline|escaped|. 
+Listing \ref{lst:opendaylight:vulnerable} shows an excerpt of the vulnerable code, where the \lstinline|deleteRole| function handles a call to an API endpoint and \lstinline|roleid| is the user input. Here this user input is insufficiently escaped using an HTML escapement utility provided by Apache, that effectively replaces all characters that cannot be displayed in plain HTML. The single quote character however is not changed by this escapement, which allows e.g. the malicious \lstinline|' or 1=1--| as a value of \lstinline|escaped|. 
 
 This code has striking similarities to our synthetic example from Listing \ref{lst:sqlSanit}, as malicious user input is (insufficiently) sanitized and naively inserted into the query. As we demonstrated, our implementation can provide useful information for vulnerabilities of this complexity. This suggests that the approach may be viable for real world applications when extended to support the complete Java standard library.
 
@@ -403,7 +403,7 @@ Here the first part \lstinline[mathescape]@((abc|$\epsilon$)empty)@ corresponds 
 With the mentioned additional \ac{dfg} edges and the described logic, we could sharpen this result.
 As mentioned above, the value of \lstinline|s|$^3$ would be $\epsilon$ due to the \lstinline|isEmpty| assertion transformation and therefore \lstinline|s|$^4$ would be a concatenation of $\epsilon$ and the string \lstinline|"empty"|, so just \lstinline|empty|.
 
-This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which is more precise, as for example the unobtainable \Verb@abcempty@ is not part of the language of this regular expression.
+This gives us \lstinline[mathescape]@empty|(abc|$\epsilon$)@ as a result, which is more precise, as, for example, the unobtainable \Verb@abcempty@ is not part of the language of this regular expression.
 
 Similar transformations could also be defined for more complex assertions like \lstinline|s.length() == 1|.
 
@@ -416,7 +416,7 @@ Christensen et al. implement a similar feature in their implementation.
 Polyvariance is an analysis strategy, where functions are analyzed more than once, usually once for every call site \cite{polyvariance}. The best result we currently obtain for the Tricky example is the regular expression \Verb@(\()*<int>([*+]<int>\))*@, that does not differentiate between \Verb@*@ and \Verb@+@. Using a polyvariant analysis could improve this, because the two calls to the \lstinline|bar| function would be analyzed separately with respect to their corresponding arguments. 
 
 Currently, we only follow the \ac{dfg} edges, of which the parameter of the function has one to each variable passed as a parameter, here \lstinline|+| and \lstinline|*|. These two edges are not differentiated and the same result is used for both calls to the function.
-By differentiating between the corresponding arguments for the analysis of each call, we could sharpen the result to \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@.
+By differentiating between the corresponding arguments for the analysis of each call we could sharpen the result to \Verb@\(*<int>(\*<int>\))*(\+<int>\))*@.
 
 \subsection{More Extensive Implementation}
 
@@ -444,7 +444,7 @@ Moreira et al. also observe that the strategy of taking the best result of using
 We chose to provide the information we extracted only as regular expressions due to regular expressions being widely used and supported.
 However, representing the information as \acp{dfa} instead of converting the automata to regular expressions has some advantages due to theoretical properties of \acp{dfa}.
 
-In most programming languages, regular expression objects, for example Kotlin's \lstinline|Regex| object, can determine whether a given string matches the expression. Using a sufficiently advanced automaton implementation more advanced checks can be performed.
+In most programming languages, regular expression objects, for example, Kotlin's \lstinline|Regex| object, can determine whether a given string matches the expression. Using a sufficiently advanced automaton implementation more advanced checks can be performed.
 After analyzing a given hotspot and obtaining an automaton $M$, instead of just matching a given string as a query, the input can be a regular expression. This regular expression can then be turned into another \ac{dfa} $N$.
 Since \acp{dfa} are closed under intersection and complement, we can build the \ac{dfa} $R = M \cap \overline{N}$, which accepts words that are in the language of the analysis result, but not in the language of the query expression.
 Now we can check whether $R$'s language is empty to determine whether all strings of the query are possible values of the analyzed node. Furthermore, if $R$'s language is not empty, we can generate a word from this language as an example for a string that is a possible value of the analyzed node, but not part of the query language.
